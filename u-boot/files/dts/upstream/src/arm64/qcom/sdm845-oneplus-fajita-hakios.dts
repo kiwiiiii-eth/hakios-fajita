@@ -1,0 +1,28 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * OnePlus 6T (fajita) for the HakiOS U-Boot: the upstream board plus the
+ * region the HakiOS loader and payload are staged in.
+ */
+
+#include "sdm845-oneplus-fajita.dts"
+
+/ {
+	reserved-memory {
+		/*
+		 * 0xf0000000..0xf4000000 is plain RAM on this phone (rmtfs starts at
+		 * 0xf5b00000). No "no-map": the hakios command writes here, the rest
+		 * of U-Boot must stay out of it.
+		 */
+		hakios_payload_mem: hakios-payload@f0000000 {
+			reg = <0x0 0xf0000000 0x0 0x4000000>;
+		};
+	};
+};
+
+/*
+ * The panel as ABL left it: 1080 x 2340, 32 bits, at 0x9d400000. Upstream describes it with memory-region only;
+ * U-Boot's simple-framebuffer driver takes the address from reg, and without one the display stays dark.
+ */
+&framebuffer {
+	reg = <0x0 0x9d400000 0x0 (1080 * 2340 * 4)>;
+};
