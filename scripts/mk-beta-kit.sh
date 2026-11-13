@@ -37,6 +37,7 @@ for f in "$K"/userland/obj/*; do
 	case "$f" in *.o|*.h|*.new) continue ;; esac
 	cp "$f" "$OUT/prebuilt/userland/"
 done
+cp "$K/userland/hello" "$OUT/prebuilt/userland/hello"      # (built beside obj/, not in it; PREBUILT=1 takes it from prebuilt/)
 cp "$REPO/beta/setup.sh" "$REPO/beta/run.sh" "$REPO/beta/README.md" "$OUT/"
 cp "$REPO/beta/NOTICE.md" "$OUT/notices/"
 chmod +x "$OUT/setup.sh" "$OUT/run.sh"
