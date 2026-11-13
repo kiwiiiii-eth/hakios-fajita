@@ -94,34 +94,29 @@ ABL（原廠 bootloader）── fastboot boot ──▶ U-Boot ── hakios lo
 
 ## 測試 Beta 0.1
 
-Beta 0.1 一樣從原始碼建置，下面是要用到全部功能時多出來的步驟。
-
-**需要準備：**
+最簡單的方式是用 [Beta 0.1 Release](https://github.com/kiwiiiii-eth/hakios-fajita/releases/tag/v0.1-beta) 上的**測試包**：
+核心、載入器和我們的程式都已預先編好，不用裝 Xcode。你要準備：
 - 已解鎖 bootloader 的 OnePlus 6T（不刷任何分區，Android 會留著）。
-- Apple Silicon 的 Mac，裝好 Xcode 和 `fastboot`。
-- 自己向 Apple 下載的 iOS 16.5 IPSW（iPhone10,3／10,6，20F66）。
-- 英文版「Firmware」列的韌體。
-- 藍牙要再加手機自己的 `crbtfw21.tlv`、`crnv21.bin`，放到 `hakios-xnu-kernel/fw-bt/`（來源是 `/vendor/firmware` 或 `bluetooth` 分區；不會進 repo）。
+- 裝好 [Homebrew](https://brew.sh) 的 Mac。
+- 自己下載的 iPhone X iOS 16.5 IPSW（20F66）。
 
-**指令**見英文版 [Testing Beta 0.1](README.md#testing-beta-01)，重點：
-- 切到 tag `fajita-v0.1-beta`（核心）和 `v0.1-beta`（本 repo）。
-- 自己產生 SSH 金鑰。
-- 跑 `tools/mk-jb.sh`。
-- 用 `BT=1 GL=1 REST=1 MODEM=1 SYSTEM=1 RC=rc.launchd.aks RC_JOBS=rc.jobs.ssh6t userland/build.sh` 建映像。
-- 用 `SECS=900 hakios-fajita/scripts/run-darwin-live.sh "" "" " ipa8=11 bt=4 aks_keys=1"` 跑 15 分鐘。
+```sh
+brew install python sevenzip zstd coreutils android-platform-tools
+tar xzf hakios-6t-v0.1-beta.tar.gz && cd hakios-6t-v0.1-beta
+./setup.sh ~/Downloads/iPhone10,3,iPhone10,6_16.5_20F66_Restore.ipsw   # 只跑一次：用 adb 從手機抽韌體、解 IPSW、組映像
+./run.sh                                                               # 每次開機：跑一輪 15 分鐘
+```
 
-**開機參數：**
-- `ipa8=11`：開 LTE 上網，要插 SIM 卡。它會改數據機的數據開關和數據 SIM 設定，但只改在數據機記憶體裡。
-- `bt=4`：藍牙。
-- `aks_keys=1`：鑰匙圈。
-- 喇叭預設就會出聲。
-
-**進主畫面後可以測：**
-1. 設定 → Wi‑Fi 加入網路（每次開機都要）。從 Mac 執行 `ssh -i hakios-xnu-kernel/ssh/client_ed25519 root@<手機 IP>`，會看到 neofetch。連不到的話，讓 Mac 和手機都連 iPhone 熱點。
-2. 聲音：設定 → 聲音與觸覺 → 鈴聲；Safari 開 YouTube，試音量鍵。
-3. 關掉 Wi‑Fi 改用 LTE 上網；藍牙掃描、和 Mac 配對。
+- 每一步在做什麼、進主畫面後可以測什麼，見測試包的 [README](beta/README.md)。
+- 測試包裡的載入器不含任何裝置身分，`setup.sh` 會從你自己的 IPSW 把身分資料填進去。
+- 想全部從原始碼建置，請照英文版「Building and running」。
 
 每一輪的紀錄會即時寫到 `out/logs/`，有問題請附在 issue 上。
+
+## 聯絡與支持
+
+- 問題回報：https://github.com/kiwiiiii-eth/hakios-fajita/issues
+- 捐款（BTC）：`bc1p6n329lsup5kpyemsvhqen70h0a4nc2ujyxflza5tfw6a4j8r4afq47gf58`
 
 ## 致謝
 

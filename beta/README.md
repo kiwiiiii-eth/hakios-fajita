@@ -38,6 +38,8 @@ Every run's log is in `work/out/logs/`. Open an issue at https://github.com/kiwi
 log, what you did and what you saw (a photo of the screen helps). `fastboot oem stop` ends a run early; holding power
 for about 15 seconds restarts the phone into Android.
 
+Support: issues at https://github.com/kiwiiiii-eth/hakios-fajita/issues; donations (BTC) `bc1p6n329lsup5kpyemsvhqen70h0a4nc2ujyxflza5tfw6a4j8r4afq47gf58`.
+
 Known: no microphone, cameras or storage that survives a reboot; BLE keyboards pair but do not type; `neofetch` says
 "iPhone X" because the user space believes it is one.
 
@@ -66,5 +68,7 @@ Darwin（XNU）核心＋iOS 16.5 使用者空間跑在 OnePlus 6T 上。由 Mac 
 - **控制中心**：手電筒、亮度。
 
 **回報問題**：到 GitHub issues，附上 `work/out/logs/` 的紀錄、你做了什麼、看到什麼。
+
+**聯絡與支持**：GitHub issues；捐款（BTC）`bc1p6n329lsup5kpyemsvhqen70h0a4nc2ujyxflza5tfw6a4j8r4afq47gf58`。
 
 **其他**：`fastboot oem stop` 可以提早結束一輪；長按電源鍵約 15 秒會重開回 Android。

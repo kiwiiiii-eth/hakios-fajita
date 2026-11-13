@@ -142,32 +142,29 @@ plus this repository's `u-boot/files/` and `u-boot/patches/sdm845-carveout.patch
 
 ## Testing Beta 0.1
 
-Beta 0.1 is built from source like any other run; these are the extra steps for everything it can do. You need a OnePlus 6T
-with an unlocked bootloader (nothing is flashed: Android stays), an Apple-silicon Mac with Xcode and `fastboot`, the iOS 16.5
-IPSW for iPhone10,3/10,6 (20F66) downloaded from Apple, the firmware below, and for Bluetooth the phone's `crbtfw21.tlv` and
-`crnv21.bin` in `hakios-xnu-kernel/fw-bt/` (from its `/vendor/firmware` or its `bluetooth` partition; never committed).
+The easy way is the **test kit** on the [Beta 0.1 release](https://github.com/kiwiiiii-eth/hakios-fajita/releases/tag/v0.1-beta):
+the kernel, the loader and our programs prebuilt, so no Xcode is needed. You bring a OnePlus 6T with an unlocked bootloader
+(nothing is flashed: Android stays), a Mac with [Homebrew](https://brew.sh), and Apple's iOS 16.5 IPSW for iPhone X (20F66):
 
 ```sh
-cd hakios-xnu-kernel && git checkout fajita-v0.1-beta && (cd ../hakios-fajita && git checkout v0.1-beta)
-# your own SSH keys, never committed: the phone's host key, and the one you log in with
-mkdir -p ssh && ssh-keygen -q -t ed25519 -N '' -f ssh/ssh_host_ed25519_key && ssh-keygen -q -t ed25519 -N '' -f ssh/client_ed25519 &&
-  cp ssh/client_ed25519.pub ssh/authorized_keys
-# ... the kernel, the loader, sysimage/unpack.sh, Mesa and ath10k as in "Building and running", then:
-tools/mk-jb.sh                                    # the package manager's prefix: sshd, zsh, neofetch
-BT=1 GL=1 REST=1 MODEM=1 SYSTEM=1 RC=rc.launchd.aks RC_JOBS=rc.jobs.ssh6t userland/build.sh
-cd .. && hakios-fajita/scripts/mk-usbimg.sh
-SECS=900 hakios-fajita/scripts/run-darwin-live.sh "" "" " ipa8=11 bt=4 aks_keys=1"   # a 15-minute run
+brew install python sevenzip zstd coreutils android-platform-tools
+tar xzf hakios-6t-v0.1-beta.tar.gz && cd hakios-6t-v0.1-beta
+./setup.sh ~/Downloads/iPhone10,3,iPhone10,6_16.5_20F66_Restore.ipsw   # once: firmware from your phone over adb, your IPSW, the images
+./run.sh                                                               # every boot: a 15-minute run
 ```
 
-`ipa8=11` brings up LTE data with a SIM in the phone (it sets the modem's data switch and data SIM, in its RAM only),
-`bt=4` Bluetooth, `aks_keys=1` the keychain. The speaker is on by default. When the home screen is up:
-
-1. Settings → Wi-Fi: join a network (every boot), then from the Mac: `ssh -i hakios-xnu-kernel/ssh/client_ed25519 root@<the
-   phone's address>` — `neofetch` greets you. If the Mac cannot reach it, put both on an iPhone's hotspot.
-2. Sound: Settings → Sounds & Haptics → Ringtone; YouTube in Safari, with the volume buttons.
-3. Turn Wi-Fi off and browse over LTE; Bluetooth: scan, pair with a Mac.
+What it does, step by step, and what to try once the lock screen is up: the kit's [README](beta/README.md). The loader
+in the kit carries no device identity; `setup.sh` writes the one from your own IPSW into it (`xnuloader/mkidentity.py --fill`).
+To build everything from source instead, follow "Building and running" with `BT=1 GL=1 REST=1 MODEM=1 SYSTEM=1
+RC=rc.launchd.aks RC_JOBS=rc.jobs.ssh6t userland/build.sh`, your own SSH keys in `hakios-xnu-kernel/ssh/` and
+`make firmware` (this repository's `pull-firmware.sh`).
 
 The log of each run is written to `out/logs/` while it runs; attach it to an issue when something goes wrong.
+
+## Contact and support
+
+- Issues and reports: https://github.com/kiwiiiii-eth/hakios-fajita/issues
+- Donations (BTC): `bc1p6n329lsup5kpyemsvhqen70h0a4nc2ujyxflza5tfw6a4j8r4afq47gf58`
 
 ## Credits
 
