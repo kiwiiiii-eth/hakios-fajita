@@ -1,10 +1,10 @@
 # HakiOS 跑在 OnePlus 6T（`fajita`）
 
 **Darwin（XNU）核心＋iOS 16.5 使用者空間，跑在 OnePlus 6T（Snapdragon 845）上。**
-開得進主畫面，GPU、觸控、Wi-Fi、充電、手電筒都能用，整套系統只跑在記憶體裡。
+開得進主畫面，GPU、觸控、Wi-Fi、**LTE 行動數據**、充電、震動、手電筒都能用，整套系統只跑在記憶體裡。
 
 這是 [HakiOS](https://github.com/oosexgang/hakios-xnu-kernel) 的裝置移植。HakiOS 把開源的 XNU 核心搬到高通手機上，
-上游參考機是 POCO X5 Pro（Snapdragon 778G）。6T 是不同世代的晶片，所以 GPU、數據機、Wi-Fi、觸控、電池、亮度、
+上游參考機是 POCO X5 Pro（Snapdragon 778G）。6T 是不同世代的晶片，所以 GPU、數據機、IPA、Wi-Fi、觸控、電池、亮度、
 閃光燈、震動的驅動，都要為它另外寫或移植。
 
 [English](README.md)
@@ -26,14 +26,15 @@
 | Wi-Fi | ✅ | ✅ | WCN3990＋Linux ath10k；在 iOS 設定加入網路，**5 GHz 約 95～110 Mbps** |
 | 電量顯示 | ✅ | ✅ | PMI8998 電量計，顯示在狀態列 |
 | **在這個核心下充電** | ✅ | ❌ | 一輪內 41% → 64%，USB 1 A |
+| **行動網路：LTE 註冊＋上網** | ✅ | 部分（未註冊） | 遠傳 LTE 4 格；Safari 走 LTE，下載 88 MB、上傳 56 MB，IPA 0 錯誤（`ipa8=11`） |
 | **手電筒** | ✅ | 部分 | 控制中心按鈕開關 |
 | **螢幕亮度** | ✅ | — | 設定與控制中心的滑桿（DSI 指令模式） |
 | 溫度保護 | ✅ | 部分 | 21 個感測器，GPU、CPU 依負載降頻 |
-| 震動 | 🚧 | ✅ | PMI8998 線性馬達驅動已寫好，測試中 |
-| 行動網路 | 部分 | 部分 | 數據機能開機並持續運作；還沒註冊 SIM |
+| 震動 | ✅ | ✅ | PMI8998 線性馬達，預設開啟（比 iPhone 大力，待調） |
 | 儲存 | 唯讀 | ✅ | `/private/var` 重開機後不保留 |
-| 聲音、麥克風、相機 | ❌ | ✅ | 還沒開始 |
-| 藍牙 | ❌ | ❌ | |
+| 聲音、麥克風 | 🚧 | ✅ | 音訊 DSP（ADSP）能開機、連上；喇叭還不會出聲 |
+| 相機 | ❌ | ✅ | 還沒開始 |
+| 藍牙 | 🚧 | ❌ | 驅動已寫好、編譯過，還沒上機測 |
 
 ## 開機流程
 
@@ -48,7 +49,8 @@ ABL（原廠 bootloader）── fastboot boot ──▶ U-Boot ── hakios lo
 
 **會寫入手機的東西**：一個 PMIC 暫存器（重開原因 `0x88f`，讓重開後停在 fastboot）。系統執行時，會寫充電器的輸入與充電電流上限、
 閃光燈和震動模組；每一項都限定在暫存器白名單內，寫完都會讀回比對。不寫任何分區：`persist`、`modemst*`、`fsg`、`xbl`、`abl`、`tz`
-完全不碰。數據機要用的檔案系統，是從記憶體裡的副本以唯讀方式提供。
+完全不碰。數據機要用的檔案系統，是從記憶體裡的副本以唯讀方式提供。開 `ipa8=11` 時，會改數據機的兩個數據設定（數據開關、預設數據 SIM），
+只改在數據機的記憶體裡，不寫回分區。
 
 ## 最難的幾關
 
@@ -64,13 +66,16 @@ ABL（原廠 bootloader）── fastboot boot ──▶ U-Boot ── hakios lo
 | Wi-Fi 偶爾 WMI 逾時 | NAPI 輪詢和中斷搶時序：輪詢途中進來的排程被丟掉，該通道的中斷一直被遮住 | NAPI 補上 Linux 的「missed」語意 |
 | 加入網路、WPA2 也過了，IP 卻停在 169.254 | `lx_transmit` 送封包入口還是佔位程式，一律回 `ENETDOWN` | 接上真正的送出路徑；DHCP 成功、Safari 能上網 |
 | 插著電，電池還是一直掉 | ABL 留下的輸入上限是 500 mA、充電電流是 **0** | 兩者都設 1 A（寫完讀回、45°C 以上自動停充） |
+| LTE 註冊約 2 分鐘後 Wi-Fi 就掛 | 數據機在 LTE 下行斷言失敗（`ipa_dl_opt_lte.c: IPA Assert new_free_space > 0`）：IPA 沒設好，封包沒地方放；Wi-Fi 韌體跑在數據機上，所以一起死 | 把 IPA 做起來；在那之前數據機預設不上線 |
+| TrustZone 一啟動 IPA 韌體就進 QCOM | 我們起頭用的 IPA 初始化寫的是 **IPA v4.11** 的暫存器位址，SDM845 是 **v3.5.1**，寫錯地方讓匯流排卡死。更早之前，TrustZone 不收保留 mbn 填充空白的 `.mdt` | 全面改用 v3.5.1 的配置；產生緊密的 `.mdt`；驗證前先照 Linux 投匯流排票 |
+| LTE 註冊了，開數據卻一直被拒（「沒有服務」） | Android 時期留在數據機裡的設定：數據開關**關**、預設數據 SIM 是**第 2 槽** | 經使用者同意送兩個 DSD 寫入（只在數據機記憶體）；SIM 改成跟 postmarketOS 一樣、不切卡槽 |
 
 ## 相關 repo
 
 | Repo | 內容 |
 |---|---|
 | **本 repo**（`hakios-fajita`） | 裝置層：設定檔、SoC 層（`soc/`，sdm845）、U-Boot 機型檔與修補、腳本、狀態 |
-| [`kiwiiiii-eth/hakios-xnu-kernel`](https://github.com/kiwiiiii-eth/hakios-xnu-kernel/tree/fajita) 的 **`fajita`** 分支 | 核心與所有新驅動：`drivers/gpu/hakios.a630.c`、`hakios.dsibl.c`、`drivers/modem/hakios.mpss845.c`、`drivers/wifi/hakios.wifi10.c`＋`wifi/lx/src10/`、`drivers/input/hakios.rmi4.c`、`drivers/power/hakios.fg8998.c`、`drivers/camera/hakios.torch8998.c`、`drivers/haptic/hakios.haptic8998.c` |
+| [`kiwiiiii-eth/hakios-xnu-kernel`](https://github.com/kiwiiiii-eth/hakios-xnu-kernel/tree/fajita) 的 **`fajita`** 分支 | 核心與所有新驅動：`drivers/gpu/hakios.a630.c`、`hakios.dsibl.c`、`drivers/modem/hakios.mpss845.c`、`drivers/wifi/hakios.wifi10.c`＋`wifi/lx/src10/`、`drivers/modem/hakios.ipa.c`（IPA 3.5.1）、`drivers/input/hakios.rmi4.c`、`drivers/power/hakios.fg8998.c`、`drivers/camera/hakios.torch8998.c`、`drivers/haptic/hakios.haptic8998.c`、`drivers/audio/hakios.adsp845.c`、`drivers/bluetooth/hakios.bt3990.c` |
 | [`oosexgang/hakios-xnu-kernel`](https://github.com/oosexgang/hakios-xnu-kernel) | 上游 HakiOS：XNU 移植、loader、使用者空間、工具、文件 |
 | [`oosexgang/hakios-uefi`](https://github.com/oosexgang/hakios-uefi/tree/mac) 的 `mac` 分支 | 本移植 U-Boot 使用的 HakiOS U-Boot 修補（`u-boot/`） |
 

@@ -1,11 +1,11 @@
 # HakiOS on the OnePlus 6T (`fajita`)
 
 **The Darwin (XNU) kernel and the iOS 16.5 user space, running on a OnePlus 6T (Snapdragon 845).**
-It boots to the home screen with the GPU, touch, Wi-Fi, charging and the flashlight working, entirely from RAM.
+It boots to the home screen with the GPU, touch, Wi-Fi, **LTE data**, charging, vibration and the flashlight working, entirely from RAM.
 
 This is a device port of [HakiOS](https://github.com/oosexgang/hakios-xnu-kernel), which ports the open-source XNU kernel to
 Qualcomm phones. The upstream reference phone is the POCO X5 Pro (Snapdragon 778G). The 6T is a different SoC generation, so
-the GPU, modem, Wi-Fi, touch, battery, brightness, flash and haptic drivers had to be written or ported for it.
+the GPU, modem, IPA, Wi-Fi, touch, battery, brightness, flash and haptic drivers had to be written or ported for it.
 
 [繁體中文說明](README.zh-TW.md)
 
@@ -27,14 +27,15 @@ As seen on the phone in November 2026 (the full list is in [`device.conf`](devic
 | Wi-Fi | ✅ | ✅ | WCN3990 + Linux ath10k; join from Settings, **5 GHz ≈ 95–110 Mbps** |
 | Battery level | ✅ | ✅ | PMI8998 fuel gauge in the status bar |
 | **Charging under this kernel** | ✅ | ❌ | 41 % → 64 % in one session, 1 A from USB |
+| **Cellular: LTE registration and data** | ✅ | partial (no registration) | FarEasTone LTE, 4 bars; Safari over LTE, 88 MB down / 56 MB up with zero IPA errors (`ipa8=11`) |
 | **Flashlight** | ✅ | partial | From Control Center's button |
 | **Screen brightness** | ✅ | — | Settings and Control Center slider (DSI command mode) |
 | Temperature guard | ✅ | partial | 21 sensors, GPU and CPU scale down with load |
-| Vibration | 🚧 | ✅ | PMI8998 LRA driver written, being tested |
-| Cellular | partial | partial | Modem boots and stays up; no SIM registration yet |
+| Vibration | ✅ | ✅ | PMI8998 LRA, on by default (stronger than an iPhone's; to be tuned) |
 | Storage | read-only | ✅ | `/private/var` is not kept across reboots yet |
-| Sound, microphone, cameras | ❌ | ✅ | Not started |
-| Bluetooth | ❌ | ❌ | |
+| Sound, microphone | 🚧 | ✅ | The audio DSP (ADSP) boots and links; no sound out of the speaker yet |
+| Cameras | ❌ | ✅ | Not started |
+| Bluetooth | 🚧 | ❌ | Driver written and built, not yet tested on the phone |
 
 ## How it boots
 
@@ -50,7 +51,8 @@ ABL (stock bootloader)  ── fastboot boot ──▶  U-Boot  ── hakios lo
 **What is written to the phone:** one PMIC register (the reboot reason `0x88f`, so a reset lands in fastboot). While the
 system runs, the charger's input and current limits, the flash LED and the haptic block, each limited to a register
 allow-list and read back after every write. No partition is written: `persist`, `modemst*`, `fsg`, `xbl`, `abl` and `tz`
-are never touched. The modem's file system is served read-only from a copy in RAM.
+are never touched. The modem's file system is served read-only from a copy in RAM. With `ipa8=11`, two of the modem's data
+settings (data switch on, default data SIM) are changed in the modem's memory only, not in its partitions.
 
 ## The hard parts
 
@@ -66,13 +68,16 @@ The bugs that took the longest, written down for the next SDM845 port:
 | Wi-Fi WMI timeouts, now and then | A NAPI poll racing the interrupt: a schedule arriving mid-poll was dropped and that copy engine's interrupt stayed masked | Linux's "missed" semantics in our NAPI |
 | Joined, WPA2 done, but stuck at 169.254 | The `lx_transmit` entry point was still a placeholder returning `ENETDOWN` | Wired to the station's send path; DHCP, Safari |
 | Battery drained while plugged in | ABL leaves the input limit at 500 mA and the charge current at **0** | Set both to 1 A (with read-back and a 45 °C cut-off) |
+| Wi-Fi died about 2 minutes after LTE registered | The modem asserted in its LTE downlink (`ipa_dl_opt_lte.c: IPA Assert new_free_space > 0`): with no IPA set up it had nowhere to put packets, and the Wi-Fi firmware runs on the modem | Bring up the IPA; until it is, the modem stays offline by default |
+| QCOM CrashDump right after TrustZone started the IPA firmware | The IPA init we started from writes **IPA v4.11** register offsets; the SDM845 has **v3.5.1**, the writes land elsewhere and hang the bus. Before that, TrustZone refused a `.mdt` that kept the mbn's padding between the program headers and the hash segment | v3.5.1 layouts throughout; a tight `.mdt`; Linux's bus votes before the authentication |
+| Registered on LTE, but every data call refused with "no service" | Left in the modem from Android: the data switch **off** and the default data SIM on **slot 2** | Two DSD writes (with consent, in the modem's memory only); the SIM provisioned as postmarketOS does it, without a slot switch |
 
 ## Repositories
 
 | Repository | What |
 |---|---|
 | **this one** (`hakios-fajita`) | The device: configs, SoC layer (`soc/`, sdm845), U-Boot board files and patch, scripts, status |
-| [`kiwiiiii-eth/hakios-xnu-kernel`](https://github.com/kiwiiiii-eth/hakios-xnu-kernel/tree/fajita), branch **`fajita`** | The kernel and every new driver: `drivers/gpu/hakios.a630.c`, `hakios.dsibl.c`, `drivers/modem/hakios.mpss845.c`, `drivers/wifi/hakios.wifi10.c` + `wifi/lx/src10/`, `drivers/input/hakios.rmi4.c`, `drivers/power/hakios.fg8998.c`, `drivers/camera/hakios.torch8998.c`, `drivers/haptic/hakios.haptic8998.c` |
+| [`kiwiiiii-eth/hakios-xnu-kernel`](https://github.com/kiwiiiii-eth/hakios-xnu-kernel/tree/fajita), branch **`fajita`** | The kernel and every new driver: `drivers/gpu/hakios.a630.c`, `hakios.dsibl.c`, `drivers/modem/hakios.mpss845.c`, `drivers/wifi/hakios.wifi10.c` + `wifi/lx/src10/`, `drivers/modem/hakios.ipa.c` (IPA 3.5.1), `drivers/input/hakios.rmi4.c`, `drivers/power/hakios.fg8998.c`, `drivers/camera/hakios.torch8998.c`, `drivers/haptic/hakios.haptic8998.c`, `drivers/audio/hakios.adsp845.c`, `drivers/bluetooth/hakios.bt3990.c` |
 | [`oosexgang/hakios-xnu-kernel`](https://github.com/oosexgang/hakios-xnu-kernel) | Upstream HakiOS: the XNU port, loader, user space, tools, docs |
 | [`oosexgang/hakios-uefi`](https://github.com/oosexgang/hakios-uefi/tree/mac), branch `mac` | HakiOS's U-Boot patch (`u-boot/`) this port's U-Boot is built with |
 
