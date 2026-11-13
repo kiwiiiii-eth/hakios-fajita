@@ -1,7 +1,11 @@
 # HakiOS on the OnePlus 6T (`fajita`)
 
 **The Darwin (XNU) kernel and the iOS 16.5 user space, running on a OnePlus 6T (Snapdragon 845).**
-It boots to the home screen with the GPU, touch, Wi-Fi, **LTE data**, charging, vibration and the flashlight working, entirely from RAM.
+It boots to the home screen with the GPU, touch, Wi-Fi, **LTE data**, **sound from the speaker**, Bluetooth, charging, vibration
+and the flashlight working, entirely from RAM.
+
+**Current release: Beta 0.1 (`v0.1-beta`, November 2026)** — see [the release notes](releases/v0.1-beta.md) and
+[testing Beta 0.1](#testing-beta-01).
 
 This is a device port of [HakiOS](https://github.com/oosexgang/hakios-xnu-kernel), which ports the open-source XNU kernel to
 Qualcomm phones. The upstream reference phone is the POCO X5 Pro (Snapdragon 778G). The 6T is a different SoC generation, so
@@ -33,9 +37,11 @@ As seen on the phone in November 2026 (the full list is in [`device.conf`](devic
 | Temperature guard | ✅ | partial | 21 sensors, GPU and CPU scale down with load |
 | Vibration | ✅ | ✅ | PMI8998 LRA, on by default (stronger than an iPhone's; to be tuned) |
 | Storage | read-only | ✅ | `/private/var` is not kept across reboots yet |
-| Sound, microphone | 🚧 | ✅ | The audio DSP (ADSP) boots and links; no sound out of the speaker yet |
+| **Sound (speaker)** | ✅ | ✅ | iOS sounds, keyboard clicks, YouTube: ADSP → I2S → TFA9894 amplifier (bypass); limited to −20 dBFS for the speaker's safety; on by default |
+| Microphone | ❌ | ✅ | Not started |
 | Cameras | ❌ | ✅ | Not started |
-| Bluetooth | 🚧 | ❌ | Driver written and built, not yet tested on the phone |
+| Bluetooth | partial | ❌ | WCN3990 over UART: iOS turns Bluetooth on, scans and pairs with a Mac (`bt=4`); BLE keyboards do not type yet |
+| SSH | ✅ | ✅ | `sshd` with your own key (`RC_JOBS=rc.jobs.ssh6t`); `neofetch` preinstalled and shown at login |
 
 ## How it boots
 
@@ -133,6 +139,35 @@ Never committed. It goes into `hakios-xnu-kernel/fw-gpu/` and `fw-modem/`, which
 from [`oosexgang/hakios-uefi@1c65228`](https://github.com/oosexgang/hakios-uefi/tree/1c6522893266157506c767e2ca427053ed3634a8/u-boot),
 plus this repository's `u-boot/files/` and `u-boot/patches/sdm845-carveout.patch`. `scripts/fetch-uboot.sh` and
 `scripts/build-uboot-vm.sh` rebuild it in a Linux VM (`aarch64-linux-gnu-`).
+
+## Testing Beta 0.1
+
+Beta 0.1 is built from source like any other run; these are the extra steps for everything it can do. You need a OnePlus 6T
+with an unlocked bootloader (nothing is flashed: Android stays), an Apple-silicon Mac with Xcode and `fastboot`, the iOS 16.5
+IPSW for iPhone10,3/10,6 (20F66) downloaded from Apple, the firmware below, and for Bluetooth the phone's `crbtfw21.tlv` and
+`crnv21.bin` in `hakios-xnu-kernel/fw-bt/` (from its `/vendor/firmware` or its `bluetooth` partition; never committed).
+
+```sh
+cd hakios-xnu-kernel && git checkout fajita-v0.1-beta && (cd ../hakios-fajita && git checkout v0.1-beta)
+# your own SSH keys, never committed: the phone's host key, and the one you log in with
+mkdir -p ssh && ssh-keygen -q -t ed25519 -N '' -f ssh/ssh_host_ed25519_key && ssh-keygen -q -t ed25519 -N '' -f ssh/client_ed25519 &&
+  cp ssh/client_ed25519.pub ssh/authorized_keys
+# ... the kernel, the loader, sysimage/unpack.sh, Mesa and ath10k as in "Building and running", then:
+tools/mk-jb.sh                                    # the package manager's prefix: sshd, zsh, neofetch
+BT=1 GL=1 REST=1 MODEM=1 SYSTEM=1 RC=rc.launchd.aks RC_JOBS=rc.jobs.ssh6t userland/build.sh
+cd .. && hakios-fajita/scripts/mk-usbimg.sh
+SECS=900 hakios-fajita/scripts/run-darwin-live.sh "" "" " ipa8=11 bt=4 aks_keys=1"   # a 15-minute run
+```
+
+`ipa8=11` brings up LTE data with a SIM in the phone (it sets the modem's data switch and data SIM, in its RAM only),
+`bt=4` Bluetooth, `aks_keys=1` the keychain. The speaker is on by default. When the home screen is up:
+
+1. Settings → Wi-Fi: join a network (every boot), then from the Mac: `ssh -i hakios-xnu-kernel/ssh/client_ed25519 root@<the
+   phone's address>` — `neofetch` greets you. If the Mac cannot reach it, put both on an iPhone's hotspot.
+2. Sound: Settings → Sounds & Haptics → Ringtone; YouTube in Safari, with the volume buttons.
+3. Turn Wi-Fi off and browse over LTE; Bluetooth: scan, pair with a Mac.
+
+The log of each run is written to `out/logs/` while it runs; attach it to an issue when something goes wrong.
 
 ## Credits
 

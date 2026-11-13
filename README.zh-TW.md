@@ -1,7 +1,9 @@
 # HakiOS 跑在 OnePlus 6T（`fajita`）
 
 **Darwin（XNU）核心＋iOS 16.5 使用者空間，跑在 OnePlus 6T（Snapdragon 845）上。**
-開得進主畫面，GPU、觸控、Wi-Fi、**LTE 行動數據**、充電、震動、手電筒都能用，整套系統只跑在記憶體裡。
+開得進主畫面，GPU、觸控、Wi-Fi、**LTE 行動數據**、**喇叭出聲**、藍牙、充電、震動、手電筒都能用，整套系統只跑在記憶體裡。
+
+**目前版本：Beta 0.1（`v0.1-beta`，2026 年 11 月）**——見[版本說明](releases/v0.1-beta.md)與[測試 Beta 0.1](#測試-beta-01)。
 
 這是 [HakiOS](https://github.com/oosexgang/hakios-xnu-kernel) 的裝置移植。HakiOS 把開源的 XNU 核心搬到高通手機上，
 上游參考機是 POCO X5 Pro（Snapdragon 778G）。6T 是不同世代的晶片，所以 GPU、數據機、IPA、Wi-Fi、觸控、電池、亮度、
@@ -32,9 +34,11 @@
 | 溫度保護 | ✅ | 部分 | 21 個感測器，GPU、CPU 依負載降頻 |
 | 震動 | ✅ | ✅ | PMI8998 線性馬達，預設開啟（比 iPhone 大力，待調） |
 | 儲存 | 唯讀 | ✅ | `/private/var` 重開機後不保留 |
-| 聲音、麥克風 | 🚧 | ✅ | 音訊 DSP（ADSP）能開機、連上；喇叭還不會出聲 |
+| **聲音（喇叭）** | ✅ | ✅ | iOS 系統音、鍵盤音、YouTube：ADSP → I2S → TFA9894 功放（旁路模式）；為保護喇叭限制在 −20 dBFS；預設開啟 |
+| 麥克風 | ❌ | ✅ | 還沒開始 |
 | 相機 | ❌ | ✅ | 還沒開始 |
-| 藍牙 | 🚧 | ❌ | 驅動已寫好、編譯過，還沒上機測 |
+| 藍牙 | 部分 | ❌ | WCN3990（UART）：iOS 能開藍牙、掃描、和 Mac 配對（`bt=4`）；BLE 鍵盤還不能打字 |
+| SSH | ✅ | ✅ | `sshd`，只收你自己的金鑰（`RC_JOBS=rc.jobs.ssh6t`）；預裝 `neofetch`，登入就顯示 |
 
 ## 開機流程
 
@@ -87,6 +91,37 @@ ABL（原廠 bootloader）── fastboot boot ──▶ U-Boot ── hakios lo
 - 編核心用 `PYTHONSAFEPATH=1 make kernel`：Homebrew 的 Python 3.15 下，XNU 自帶的 `tools/lldbmacros/core/collections.py` 會蓋掉標準函式庫，第一次編譯會失敗。
 - 韌體不放在 repo 裡，要從自己的手機和 linux-firmware 取得（清單見英文版「Firmware」）。
 - `scripts/run-darwin-live.sh` 會自動把手機帶回 ABL fastboot、開 loader、用 USB 送 2.4 GB 系統映像（約 1 分鐘），開機並即時存紀錄到 `out/logs/`。
+
+## 測試 Beta 0.1
+
+Beta 0.1 一樣從原始碼建置，下面是要用到全部功能時多出來的步驟。
+
+**需要準備：**
+- 已解鎖 bootloader 的 OnePlus 6T（不刷任何分區，Android 會留著）。
+- Apple Silicon 的 Mac，裝好 Xcode 和 `fastboot`。
+- 自己向 Apple 下載的 iOS 16.5 IPSW（iPhone10,3／10,6，20F66）。
+- 英文版「Firmware」列的韌體。
+- 藍牙要再加手機自己的 `crbtfw21.tlv`、`crnv21.bin`，放到 `hakios-xnu-kernel/fw-bt/`（來源是 `/vendor/firmware` 或 `bluetooth` 分區；不會進 repo）。
+
+**指令**見英文版 [Testing Beta 0.1](README.md#testing-beta-01)，重點：
+- 切到 tag `fajita-v0.1-beta`（核心）和 `v0.1-beta`（本 repo）。
+- 自己產生 SSH 金鑰。
+- 跑 `tools/mk-jb.sh`。
+- 用 `BT=1 GL=1 REST=1 MODEM=1 SYSTEM=1 RC=rc.launchd.aks RC_JOBS=rc.jobs.ssh6t userland/build.sh` 建映像。
+- 用 `SECS=900 hakios-fajita/scripts/run-darwin-live.sh "" "" " ipa8=11 bt=4 aks_keys=1"` 跑 15 分鐘。
+
+**開機參數：**
+- `ipa8=11`：開 LTE 上網，要插 SIM 卡。它會改數據機的數據開關和數據 SIM 設定，但只改在數據機記憶體裡。
+- `bt=4`：藍牙。
+- `aks_keys=1`：鑰匙圈。
+- 喇叭預設就會出聲。
+
+**進主畫面後可以測：**
+1. 設定 → Wi‑Fi 加入網路（每次開機都要）。從 Mac 執行 `ssh -i hakios-xnu-kernel/ssh/client_ed25519 root@<手機 IP>`，會看到 neofetch。連不到的話，讓 Mac 和手機都連 iPhone 熱點。
+2. 聲音：設定 → 聲音與觸覺 → 鈴聲；Safari 開 YouTube，試音量鍵。
+3. 關掉 Wi‑Fi 改用 LTE 上網；藍牙掃描、和 Mac 配對。
+
+每一輪的紀錄會即時寫到 `out/logs/`，有問題請附在 issue 上。
 
 ## 致謝
 
