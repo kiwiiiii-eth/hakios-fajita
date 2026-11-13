@@ -79,6 +79,7 @@ ABL（原廠 bootloader）── fastboot boot ──▶ U-Boot ── hakios lo
 步驟與指令見 [English README](README.md#building-and-running)。重點：
 
 - 這是開發者移植，不是可安裝的 ROM。需要**已解鎖 bootloader** 的 6T，以及 Apple Silicon 的 Mac（核心用 Xcode 編譯）。
+- 編核心用 `PYTHONSAFEPATH=1 make kernel`：Homebrew 的 Python 3.15 下，XNU 自帶的 `tools/lldbmacros/core/collections.py` 會蓋掉標準函式庫，第一次編譯會失敗。
 - 韌體不放在 repo 裡，要從自己的手機和 linux-firmware 取得（清單見英文版「Firmware」）。
 - `scripts/run-darwin-live.sh` 會自動把手機帶回 ABL fastboot、開 loader、用 USB 送 2.4 GB 系統映像（約 1 分鐘），開機並即時存紀錄到 `out/logs/`。
 

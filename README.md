@@ -90,7 +90,7 @@ ln -s ../../hakios-fajita hakios-xnu-kernel/devices/fajita
 export PATH=$PWD/hakios-fajita/hostbin:$PATH      # macOS stand-ins for lld-link, llvm-ar, GNU sha256sum, bison, 7z
 
 cd hakios-xnu-kernel
-make fajita_defconfig && make kernel               # the kernel with the 6T's drivers (about a minute)
+make fajita_defconfig && PYTHONSAFEPATH=1 make kernel   # the kernel with the 6T's drivers (see the note below)
 xnuloader/mkidentity.sh && xnuloader/build.sh      # the loader
 sysimage/unpack.sh ~/iPhone10,3,iPhone10,6_16.5_20F66_Restore.ipsw   # YOUR IPSW, downloaded from Apple
 tools/mk-mesa.sh && tools/mk-ath11k.sh fetch && tools/mk-ath10k.sh  # Mesa (GPU), Linux's ath10k (Wi-Fi)
@@ -100,6 +100,10 @@ cd ..
 hakios-fajita/scripts/mk-usbimg.sh                 # U-Boot + loader, packed for ABL: out/hakios-fajita-usb.img
 hakios-fajita/scripts/run-darwin-live.sh           # phone in fastboot: boot, stage the system, run, fetch the log
 ```
+
+`PYTHONSAFEPATH=1`: with Homebrew's Python 3.15, XNU's own `tools/lldbmacros/core/collections.py` shadows the standard
+library while the build checks the lldb macros, and a first build fails; this keeps the script's directory off `sys.path`.
+The first `make kernel` also fetches Apple's XNU source and the SDKs (a few minutes); later ones take about a minute.
 
 `run-darwin-live.sh` takes the phone from any state (U-Boot, loader, ABL) back to ABL fastboot, boots the loader, sends the
 2.4 GB system image over USB (about a minute), starts the kernel and copies the log to `out/logs/` while it runs. Extra boot
