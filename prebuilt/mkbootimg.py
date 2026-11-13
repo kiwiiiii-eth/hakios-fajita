@@ -28,7 +28,7 @@ import os
 import re
 import tempfile
 
-from gki.generate_gki_certificate import generate_gki_certificate
+# (imported where it is used: only a GKI-signed image needs it, and AOSP's gki/ is not here -- HakiOS 6T, Beta 0.1)
 
 # Constant and structure definition is in
 # system/tools/mkbootimg/include/bootimg/bootimg.h
@@ -594,6 +594,7 @@ def add_boot_image_signature(args, pagesize):
     # as the boot signature.
     with tempfile.TemporaryDirectory() as temp_out_dir:
         boot_signature_output = os.path.join(temp_out_dir, 'boot_signature')
+        from gki.generate_gki_certificate import generate_gki_certificate
         generate_gki_certificate(
             image=args.output.name, avbtool=args.gki_signing_avbtool_path,
             name='boot', algorithm=args.gki_signing_algorithm,
