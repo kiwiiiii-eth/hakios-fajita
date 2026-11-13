@@ -9,12 +9,13 @@ KERNEL=${1:-$K/hakios-kernel}; [ -f "$KERNEL" ] || KERNEL=$K/build/hakios-kernel
 RAMDISK=${2:-$K/prebuilt/userland/hello}; EXTRA=${3:-}
 UBOOT=${UBOOT:-$REPO/prebuilt/u-boot.bin}; SECS=${SECS:-20}
 NAME=${NAME:-run-$(date +%m%d-%H%M%S)}; LOG=$ROOT/out/logs/$NAME.txt; mkdir -p "$ROOT/out/logs" "$K/build"
-ARGS=$(cd "$K" && python3 tools/hakios-config.py args)
-# the SoC's addresses (devices/fajita/soc.args, one name=value a line; # is a comment)
-SOCARGS=$(grep -v '^[[:space:]]*#' "$K/devices/fajita/soc.args" | tr '\n' ' ' | tr -s ' ')
+# ARGS and SOCARGS: the whole line, or only what the kernel's built-in arguments leave out (scripts/lib-args.sh); no run on a stale kernel
+. "$REPO/scripts/lib-args.sh"; resolve_args "$K" "$KERNEL" || exit 1
 CMDLINE="loader_return_after=$SECS -v $ARGS $SOCARGS$EXTRA"
 echo "run: kernel=$(basename "$KERNEL") ramdisk=$(basename "$RAMDISK")"
 echo "run: cmdline=$CMDLINE"
+# DRYRUN_CMDLINE=1: say the command line and stop, before the phone, fastboot or USB are touched (the tests use only this)
+if [ -n "${DRYRUN_CMDLINE:-}" ]; then exit 0; fi
 
 cd "$K"
 python3 xnuloader/mkpayload.py -o build/run.bin kernel="$KERNEL" ramdisk="$RAMDISK" --cmdline "$CMDLINE" >/dev/null

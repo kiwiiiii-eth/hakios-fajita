@@ -10,13 +10,15 @@ SYS=${1:-$K/userland/system.apfs}; RD=${2:-$K/userland/root.apfs}; EXTRA=${3:-}
 KERNEL=${KERNEL:-$K/hakios-kernel}; SECS=${SECS:-60}
 NAME=${NAME:-darwin-$(date +%m%d-%H%M%S)}; LOG=$ROOT/out/logs/$NAME.txt; mkdir -p "$ROOT/out/logs" "$K/build"
 USBIMG=${USBIMG:-$ROOT/out/hakios-fajita-usb.img}
-ARGS=$(cd "$K" && python3 tools/hakios-config.py args)
-SOCARGS=$(grep -v '^[[:space:]]*#' "$K/devices/fajita/soc.args" | tr '\n' ' ' | tr -s ' ')
+# ARGS and SOCARGS: the whole line, or only what the kernel's built-in arguments leave out (scripts/lib-args.sh); no run on a stale kernel
+. "$REPO/scripts/lib-args.sh"; resolve_args "$K" "$KERNEL" || exit 1
 # VERBOSE=-v：核心文字畫在螢幕上（除錯用）；預設不畫，iOS 畫面乾淨，紀錄照樣交回
 # PRE="name=value ..."：放在設定值前面的開機參數（注意：XNU 重複的參數以「最後一個」為準，要蓋掉設定值請放在最後的額外參數裡）
 CMDLINE="loader_return_after=$SECS epoch=$(date +%s) sb_delay=8 ${VERBOSE:-} ${PRE:-} $ARGS $SOCARGS$EXTRA"
 echo "darwin: kernel=$(basename "$KERNEL") system=$(basename "$SYS") ramdisk=$(basename "$RD")"
 echo "darwin: cmdline=$CMDLINE"
+# DRYRUN_CMDLINE=1: say the command line and stop, before the phone, fastboot or USB are touched (the tests use only this)
+if [ -n "${DRYRUN_CMDLINE:-}" ]; then exit 0; fi
 
 state() { fastboot devices 2>/dev/null | awk -v s="${ABL_SERIAL:-}" '$1=="xnuloader"{print "loader"; exit} $1 ~ /^\?+$/ {print "uboot"; exit} $2=="fastboot" && (s=="" || $1==s) {print "abl"; exit}'; }
 wait_for() { local want=$1 n=${2:-120}; for i in $(seq 1 $n); do [ "$(state)" = "$want" ] && return 0; sleep 1; done; return 1; }
