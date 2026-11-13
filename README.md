@@ -144,7 +144,7 @@ plus this repository's `u-boot/files/` and `u-boot/patches/sdm845-carveout.patch
 
 The easy way is the **test kit** on the [Beta 0.1 release](https://github.com/kiwiiiii-eth/hakios-fajita/releases/tag/v0.1-beta):
 the kernel, the loader and our programs prebuilt, so no Xcode is needed. You bring a OnePlus 6T with an unlocked bootloader
-(nothing is flashed: Android stays), a Mac with [Homebrew](https://brew.sh), and Apple's iOS 16.5 IPSW for iPhone X (20F66):
+(nothing is flashed: Android stays), a Mac (Apple silicon; Intel should work, untried) with [Homebrew](https://brew.sh), and Apple's iOS 16.5 IPSW for iPhone X (20F66):
 
 ```sh
 brew install python sevenzip zstd coreutils android-platform-tools
@@ -164,6 +164,7 @@ The log of each run is written to `out/logs/` while it runs; attach it to an iss
 ## Contact and support
 
 - Issues and reports: https://github.com/kiwiiiii-eth/hakios-fajita/issues
+- X: [@0x718_718](https://x.com/0x718_718)
 - Donations (BTC): `bc1p6n329lsup5kpyemsvhqen70h0a4nc2ujyxflza5tfw6a4j8r4afq47gf58`
 
 ## Credits

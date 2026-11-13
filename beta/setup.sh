@@ -4,7 +4,7 @@
 #   ./setup.sh ~/Downloads/iPhone10,3,iPhone10,6_16.5_20F66_Restore.ipsw
 #
 # What it does (each step is skipped when its result is already there; run it again after a failure):
-#   1. checks the tools: Apple-silicon macOS, python3, fastboot, adb, 7zz, zstd, cc, curl, 15 GB free
+#   1. checks the tools: macOS (Apple silicon or Intel), python3, fastboot, adb, 7zz, zstd, cc, curl, 15 GB free
 #   2. fetches the sources of this release from GitHub (hakios-xnu-kernel at fajita-v0.1-beta, hakios-fajita at v0.1-beta)
 #   3. puts the kit's prebuilt kernel and programs in place (nothing is compiled)
 #   4. pulls the phone's firmware over adb (the phone in Android, USB debugging on): hakios-fajita/pull-firmware.sh
@@ -31,7 +31,7 @@ die() { printf '\nsetup.sh: %s\n' "$*" >&2; exit 1; }
 
 # --- 1. tools ---------------------------------------------------------------------------------------
 say "1/8 checking the tools"
-[ "$(uname -s)/$(uname -m)" = Darwin/arm64 ] || die "this kit is for an Apple-silicon Mac (macOS on arm64)"
+[ "$(uname -s)" = Darwin ] || die "this kit is for a Mac (macOS); on Linux, build from source (hakios-fajita's README)"
 missing=
 for t in python3 fastboot adb 7zz zstd cc curl shasum timeout; do command -v $t >/dev/null || missing="$missing $t"; done
 [ -z "$missing" ] || die "missing:$missing

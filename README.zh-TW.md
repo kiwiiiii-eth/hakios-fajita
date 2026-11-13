@@ -97,7 +97,7 @@ ABL（原廠 bootloader）── fastboot boot ──▶ U-Boot ── hakios lo
 最簡單的方式是用 [Beta 0.1 Release](https://github.com/kiwiiiii-eth/hakios-fajita/releases/tag/v0.1-beta) 上的**測試包**：
 核心、載入器和我們的程式都已預先編好，不用裝 Xcode。你要準備：
 - 已解鎖 bootloader 的 OnePlus 6T（不刷任何分區，Android 會留著）。
-- 裝好 [Homebrew](https://brew.sh) 的 Mac。
+- 裝好 [Homebrew](https://brew.sh) 的 Mac（Apple Silicon 已測；Intel 應可用，未實測）。
 - 自己下載的 iPhone X iOS 16.5 IPSW（20F66）。
 
 ```sh
@@ -116,6 +116,7 @@ tar xzf hakios-6t-v0.1-beta.tar.gz && cd hakios-6t-v0.1-beta
 ## 聯絡與支持
 
 - 問題回報：https://github.com/kiwiiiii-eth/hakios-fajita/issues
+- X：[@0x718_718](https://x.com/0x718_718)
 - 捐款（BTC）：`bc1p6n329lsup5kpyemsvhqen70h0a4nc2ujyxflza5tfw6a4j8r4afq47gf58`
 
 ## 致謝

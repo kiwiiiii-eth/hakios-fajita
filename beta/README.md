@@ -7,7 +7,7 @@ Release notes: https://github.com/kiwiiiii-eth/hakios-fajita/blob/main/releases/
 ## You need
 
 - A **OnePlus 6T** (fajita, not the 6 or the T-Mobile 6T) with an **unlocked bootloader**, running OxygenOS
-- An **Apple-silicon Mac** with [Homebrew](https://brew.sh), and:
+- A **Mac** (Apple silicon, tested; Intel should work, untried) with [Homebrew](https://brew.sh), and:
   `brew install python sevenzip zstd coreutils android-platform-tools`
 - **Apple's iOS 16.5 IPSW for iPhone X** (iPhone10,3/10,6, build 20F66, `iPhone10,3,iPhone10,6_16.5_20F66_Restore.ipsw`,
   6.2 GB), downloaded by you, e.g. from https://ipsw.me/iPhone10,3
@@ -38,7 +38,7 @@ Every run's log is in `work/out/logs/`. Open an issue at https://github.com/kiwi
 log, what you did and what you saw (a photo of the screen helps). `fastboot oem stop` ends a run early; holding power
 for about 15 seconds restarts the phone into Android.
 
-Support: issues at https://github.com/kiwiiiii-eth/hakios-fajita/issues; donations (BTC) `bc1p6n329lsup5kpyemsvhqen70h0a4nc2ujyxflza5tfw6a4j8r4afq47gf58`.
+Support: issues at https://github.com/kiwiiiii-eth/hakios-fajita/issues; X [@0x718_718](https://x.com/0x718_718); donations (BTC) `bc1p6n329lsup5kpyemsvhqen70h0a4nc2ujyxflza5tfw6a4j8r4afq47gf58`.
 
 Known: no microphone, cameras or storage that survives a reboot; BLE keyboards pair but do not type; `neofetch` says
 "iPhone X" because the user space believes it is one.
@@ -52,7 +52,7 @@ Darwin（XNU）核心＋iOS 16.5 使用者空間跑在 OnePlus 6T 上。由 Mac 
 
 **需要準備**：
 - 已解鎖 bootloader 的 OnePlus 6T（OxygenOS）。
-- Apple Silicon 的 Mac，裝好 Homebrew 後執行 `brew install python sevenzip zstd coreutils android-platform-tools`。
+- Mac（Apple Silicon 已測；Intel 應可用，未實測），裝好 Homebrew 後執行 `brew install python sevenzip zstd coreutils android-platform-tools`。
 - 自己下載的 iPhone X iOS 16.5 IPSW（20F66，6.2 GB）。
 - 約 15 GB 空間。
 
@@ -69,6 +69,6 @@ Darwin（XNU）核心＋iOS 16.5 使用者空間跑在 OnePlus 6T 上。由 Mac 
 
 **回報問題**：到 GitHub issues，附上 `work/out/logs/` 的紀錄、你做了什麼、看到什麼。
 
-**聯絡與支持**：GitHub issues；捐款（BTC）`bc1p6n329lsup5kpyemsvhqen70h0a4nc2ujyxflza5tfw6a4j8r4afq47gf58`。
+**聯絡與支持**：GitHub issues；X [@0x718_718](https://x.com/0x718_718)；捐款（BTC）`bc1p6n329lsup5kpyemsvhqen70h0a4nc2ujyxflza5tfw6a4j8r4afq47gf58`。
 
 **其他**：`fastboot oem stop` 可以提早結束一輪；長按電源鍵約 15 秒會重開回 Android。

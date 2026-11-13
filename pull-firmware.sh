@@ -5,8 +5,9 @@
 #
 #   fw-gpu/    a630_zap.mdt + a630_zap.b* (the phone's, signed for its TrustZone); a630_gmu.bin, a630_sqe.fw (linux-firmware)
 #   fw-modem/  modem.mdt + modem.b*, mba.mbn, and image/ whole: the modem's, the audio DSP's (adsp.*) and Wi-Fi's board
-#              files (bdwlan.*, wlanmdsp.mbn), which the modem reads over TFTP; ath10k/WCN3990/hw1.0/firmware-5.bin and
-#              board-2.bin (linux-firmware)
+#              files (bdwlan.*, wlanmdsp.mbn), which the modem reads over TFTP; into image/ too the IPA's firmware
+#              (ipa_fws.mdt + .b*, which Android keeps in /vendor/firmware: LTE data); ath10k/WCN3990/hw1.0/firmware-5.bin
+#              and board-2.bin (linux-firmware)
 #   fw-bt/     crbtfw21.tlv, crnv21.bin: the WCN3990's Bluetooth rampatch and NVM (the phone's bluetooth partition)
 #
 # A plain `adb pull` first; where the files are not readable by adb's shell user (some ROMs mount /vendor/firmware_mnt with
@@ -33,6 +34,7 @@ echo "pull-firmware.sh: OnePlus 6T, $(adb shell getprop ro.build.display.id 2>/d
 # where Android keeps them (the Bluetooth partition is mounted at /vendor/bt_firmware on OxygenOS; /vendor/firmware elsewhere)
 IMAGE=/vendor/firmware_mnt/image
 ZAP="/vendor/firmware/a630_zap.*"
+IPA="/vendor/firmware/ipa_fws.*"
 BT_DIRS="/vendor/bt_firmware/image /bt_firmware/image /vendor/firmware"
 
 STAGE=fw-stage.$$
@@ -45,6 +47,8 @@ plain_pull() {
 	[ -f "$STAGE/image/modem.mdt" ] && [ -f "$STAGE/image/adsp.mdt" ] || return 1
 	for f in $(adb shell "ls $ZAP" 2>/dev/null | tr -d '\r'); do adb pull "$f" "$STAGE/gpu/" >/dev/null 2>&1 || return 1; done
 	ls "$STAGE"/gpu/a630_zap.mdt >/dev/null 2>&1 || return 1
+	mkdir -p "$STAGE/ipa"
+	for f in $(adb shell "ls $IPA" 2>/dev/null | tr -d '\r'); do adb pull "$f" "$STAGE/ipa/" >/dev/null 2>&1 || return 1; done
 	for d in $BT_DIRS; do
 		adb pull "$d/crbtfw21.tlv" "$STAGE/bt/" >/dev/null 2>&1 && adb pull "$d/crnv21.bin" "$STAGE/bt/" >/dev/null 2>&1 && return 0
 	done
@@ -55,7 +59,7 @@ root_pull() {
 	local S=/data/local/tmp/hakios-fw
 	adb shell "su -c id" 2>/dev/null | grep -q "uid=0" || return 1
 	echo "pull-firmware.sh: not readable as adb's shell user; copying through su (nothing on the phone is changed)"
-	adb shell "su -c 'sh -c \"rm -rf $S; mkdir -p $S/gpu $S/bt; cp -r $IMAGE $S/; cp $ZAP $S/gpu/ 2>/dev/null;
+	adb shell "su -c 'sh -c \"rm -rf $S; mkdir -p $S/gpu $S/bt $S/ipa; cp -r $IMAGE $S/; cp $ZAP $S/gpu/ 2>/dev/null; cp $IPA $S/ipa/ 2>/dev/null;
 		for d in $BT_DIRS; do [ -f \\\$d/crbtfw21.tlv ] && cp \\\$d/crbtfw21.tlv \\\$d/crnv21.bin $S/bt/ && break; done;
 		chmod -R a+rX $S\"'" >/dev/null
 	rm -rf "$STAGE"; adb pull "$S" "$STAGE" >/dev/null
@@ -74,6 +78,11 @@ mkdir -p fw-modem fw-gpu fw-bt
 mv "$STAGE/image" fw-modem/image
 cp fw-modem/image/modem.mdt fw-modem/image/modem.b* fw-modem/image/mba.mbn fw-modem/
 cp "$STAGE"/gpu/a630_zap.* fw-gpu/
+if ls "$STAGE"/ipa/ipa_fws.mdt >/dev/null 2>&1; then
+	cp "$STAGE"/ipa/ipa_fws.* fw-modem/image/
+elif [ ! -f fw-modem/image/ipa_fws.mdt ]; then
+	echo "pull-firmware.sh: no /vendor/firmware/ipa_fws.mdt on the phone: without it there is no LTE data (Wi-Fi and the rest work)" >&2
+fi
 cp "$STAGE"/bt/crbtfw21.tlv "$STAGE"/bt/crnv21.bin fw-bt/
 
 if [ -z "${NO_LINUX_FIRMWARE:-}" ]; then
