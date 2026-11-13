@@ -18,15 +18,15 @@ resolve_args() {
 		want=$(cd "$k" && python3 tools/hakios-config.py builtin --sha 2>/dev/null) || want=
 		[[ $want =~ ^[0-9a-f]{16}$ ]] || want=
 		if [ -z "$want" ]; then
-			echo "args: 核心內建了參數（hash $hash），但算不出目前設定應有的 hash（hakios-config.py builtin --sha 失敗或不存在），拒絕開跑：請在 $k 更新工具後 make kernel" >&2
+			echo "args: 核心內建了參數（hash ${hash}），但算不出目前設定應有的 hash（hakios-config.py builtin --sha 失敗或不存在），拒絕開跑：請在 ${k} 更新工具後 make kernel" >&2
 			return 1
 		fi
 		if [ "$hash" != "$want" ]; then
-			echo "args: 核心內建參數和目前設定不一致（核心 $hash，目前設定 $want），拒絕開跑：請先 make kernel" >&2
+			echo "args: 核心內建參數和目前設定不一致（核心 ${hash}，目前設定 ${want}），拒絕開跑：請先 make kernel" >&2
 			return 1
 		fi
 		ARGS=$(cd "$k" && python3 tools/hakios-config.py args) || { echo "args: hakios-config.py args 失敗" >&2; return 1; }
-		echo "args: 核心內建參數 hash $hash 與目前設定相符，boot line 只放保留參數"
+		echo "args: 核心內建參數 hash ${hash} 與目前設定相符，boot line 只放保留參數"
 	else
 		ARGS=$(cd "$k" && python3 tools/hakios-config.py args --full 2>/dev/null) ||
 			ARGS=$(cd "$k" && python3 tools/hakios-config.py args) || { echo "args: hakios-config.py args 失敗" >&2; return 1; }
