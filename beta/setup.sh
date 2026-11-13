@@ -79,6 +79,10 @@ echo "ok"
 
 # --- 4. firmware ------------------------------------------------------------------------------------
 say "4/8 the phone's firmware"
+# (FW=DIR: take fw-gpu, fw-modem and fw-bt from DIR, e.g. an earlier kit's work/hakios-xnu-kernel, instead of the phone)
+if [ -n "${FW:-}" ] && [ ! -f "$K/fw-modem/modem.mdt" ]; then
+	for d in fw-gpu fw-modem fw-bt; do [ -d "$FW/$d" ] && cp -R "$FW/$d" "$K/"; done
+fi
 if [ -f "$K/fw-modem/modem.mdt" ] && [ -f "$K/fw-gpu/a630_zap.mdt" ] && [ -f "$K/fw-bt/crbtfw21.tlv" ] &&
    [ -f "$K/fw-gpu/a630_gmu.bin" ] && [ -f "$K/fw-modem/ath10k/WCN3990/hw1.0/board-2.bin" ]; then
 	echo "already there (delete work/hakios-xnu-kernel/fw-* to pull again)"
