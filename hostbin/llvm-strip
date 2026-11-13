@@ -1,0 +1,3 @@
+#!/bin/sh
+# Mesa's cross file names llvm-strip: the system's strip
+exec /usr/bin/strip "$@"

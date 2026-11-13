@@ -1,0 +1,3 @@
+#!/bin/sh
+# Mesa's cross file names llvm-ar: the system's ar handles Mach-O arm64 as well
+exec /usr/bin/ar "$@"

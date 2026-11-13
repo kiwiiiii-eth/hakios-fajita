@@ -1,4 +1,4 @@
-# HakiOS's U-Boot for the POCO X5 Pro 5G (redwood): started by ABL from RAM (fastboot boot), never flashed.
+# HakiOS's U-Boot for the OnePlus 6T (fajita): started by ABL from RAM (fastboot boot), never flashed.
 # The common Qualcomm configuration, with the phone settings of board/qualcomm/qcom-phone.config, and the hakios
 # command that starts the HakiOS loader from memory (cmd/hakios.c).
 #include "qcom_defconfig"

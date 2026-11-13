@@ -1,98 +1,144 @@
-# Device: Qualcomm Technologies, Inc. SDM845 v1 SoC (fajita)
+# HakiOS on the OnePlus 6T (`fajita`)
 
-Made by `tools/new-device.py` on 2026-11-10, from the file fajita2.dtb. Edit it as the port goes.
+**The Darwin (XNU) kernel and the iOS 16.5 user space, running on a OnePlus 6T (Snapdragon 845).**
+It boots to the home screen with the GPU, touch, Wi-Fi, charging and the flashlight working, entirely from RAM.
 
-| What | Value |
-|---|---|
-| Board (the tree's `model`) | Qualcomm Technologies, Inc. SDM845 v1 SoC |
-| Compatible | `qcom,sdm845` |
+This is a device port of [HakiOS](https://github.com/oosexgang/hakios-xnu-kernel), which ports the open-source XNU kernel to
+Qualcomm phones. The upstream reference phone is the POCO X5 Pro (Snapdragon 778G). The 6T is a different SoC generation, so
+the GPU, modem, Wi-Fi, touch, battery, brightness, flash and haptic drivers had to be written or ported for it.
 
-## The SoC addresses
+[繁體中文說明](README.zh-TW.md)
 
-No reference tree to compare with (devices/redwood/prebuilt/device-tree.dtb is missing).
+> **Not affiliated with Apple, OnePlus or Qualcomm.** No Apple software, no iOS image and no vendor firmware are in
+> this repository. You download the IPSW from Apple yourself and take the firmware from your own phone. Whether you may
+> use them this way is up to you (see upstream's [LEGAL.md](https://github.com/oosexgang/hakios-xnu-kernel/blob/main/LEGAL.md)).
+> Apple's services (activation, Apple ID, App Store) are not supported and are not a goal.
 
-| Argument | Value | Against the reference |
+## What works
+
+As seen on the phone in November 2026 (the full list is in [`device.conf`](device.conf)):
+
+| Area | 6T | Upstream reference (redwood) | Notes |
+|---|---|---|---|
+| Lock screen, home screen, stock apps | ✅ | ✅ | SpringBoard, Settings, Safari, Health … |
+| Touch, buttons | ✅ | ✅ | Synaptics S3706B (RMI4 over I2C), written for the 6T |
+| All 8 CPU cores, frequency scaling | ✅ | ✅ | SDM845 OSM tables, load governor |
+| GPU (OpenGL ES 3.2 via Mesa) | ✅ | ✅ | **Adreno 630 brought up from cold**, up to 60 fps |
+| Wi-Fi | ✅ | ✅ | WCN3990 + Linux ath10k; join from Settings, **5 GHz ≈ 95–110 Mbps** |
+| Battery level | ✅ | ✅ | PMI8998 fuel gauge in the status bar |
+| **Charging under this kernel** | ✅ | ❌ | 41 % → 64 % in one session, 1 A from USB |
+| **Flashlight** | ✅ | partial | From Control Center's button |
+| **Screen brightness** | ✅ | — | Settings and Control Center slider (DSI command mode) |
+| Temperature guard | ✅ | partial | 21 sensors, GPU and CPU scale down with load |
+| Vibration | 🚧 | ✅ | PMI8998 LRA driver written, being tested |
+| Cellular | partial | partial | Modem boots and stays up; no SIM registration yet |
+| Storage | read-only | ✅ | `/private/var` is not kept across reboots yet |
+| Sound, microphone, cameras | ❌ | ✅ | Not started |
+| Bluetooth | ❌ | ❌ | |
+
+## How it boots
+
+Nothing is flashed. A reboot brings the phone back to its own Android.
+
+```
+ABL (stock bootloader)  ── fastboot boot ──▶  U-Boot  ── hakios load ──▶  HakiOS loader (UEFI app)
+      ▲                                                                       │  stages the system image in RAM
+      └─ reboot reason set in the PMIC so every reset returns to fastboot      ▼
+                                                                    XNU 8796 ─▶ launchd ─▶ SpringBoard
+```
+
+**What is written to the phone:** one PMIC register (the reboot reason `0x88f`, so a reset lands in fastboot). While the
+system runs, the charger's input and current limits, the flash LED and the haptic block, each limited to a register
+allow-list and read back after every write. No partition is written: `persist`, `modemst*`, `fsg`, `xbl`, `abl` and `tz`
+are never touched. The modem's file system is served read-only from a copy in RAM.
+
+## The hard parts
+
+The bugs that took the longest, written down for the next SDM845 port:
+
+| Problem | Cause | Fix |
 |---|---|---|
-| `soc_ipa_base` | `0x1e40000` |  |
-| `soc_gsi_base` | `0x1e04000` |  |
-| `soc_ipcc` | `(not found)` | **missing**: the tree has no node this was read from; see the table in devices/redwood/README.md |
-| `soc_aoss` | `0xc300000` |  |
-| `soc_rsc` | `(not found)` | **missing**: the tree has no node this was read from; see the table in devices/redwood/README.md |
-| `soc_apps_smmu` | `0x15000000` |  |
-| `soc_cmd_db` | `(not found)` | **missing**: the tree has no node this was read from; see the table in devices/redwood/README.md |
-| `soc_mpss_mem` | `(not found)` | **missing**: the tree has no node this was read from; see the table in devices/redwood/README.md |
-| `modem_ipa_fw_at` | `(not found)` | **missing**: the tree has no node this was read from; see the table in devices/redwood/README.md |
-| `soc_smem` | `(not found)` | **missing**: the tree has no node this was read from; see the table in devices/redwood/README.md |
-| `soc_imem` | `0x14600000` |  |
-| `soc_ipa_stream` | `0x720` |  |
-| `soc_ipa_stream_uc` | `0x722` |  |
-| `soc_pas_mpss` | `(not found)` | **missing**: the tree has no node this was read from; see the table in devices/redwood/README.md |
-| `soc_pas_ipa` | `0xf` |  |
-| `soc_ipa_fw` | `ipa_fws` |  |
+| The kernel stopped right after the framebuffer came up | XNU hard-codes the EL1 virtual timer as interrupt 27; on SDM845 it is **19** | `gic_vtimer=` boot argument (`CONFIG_GIC_VTIMER=19` in `soc/configs/sdm845.config`) |
+| Touch only worked with the USB cable unplugged | USB noise; the controller has a "charger connected" bit (F01 ctrl0 bit 5) | The driver reads USBIN from the PMIC every 0.5 s and sets the bit |
+| GMU powered the GPU but never set the PLL | The A630's GMU firmware wants chip ID **0x06030200** (630.2), not the device tree's 0x06030000; RSCC/PDC must be programmed *before* the GMU starts | Both fixed; then DCVS votes, without which every GPU wait took 70–185 ms |
+| The phone crashed to Qualcomm CrashDump 0.4 s after the modem's MBA got its header | Read the TrustZone diag log out of a CrashDump with EDL: a **NoC error** at `QDSP6SS_SLEEP`. Our own debug read touched QDSP6SS after the MBA had locked it with an XPU | No QDSP6SS access after the header is handed over (Linux never reads it either) |
+| Modem up, but no Wi-Fi firmware service | The modem asserted when we pre-allocated the IPA SMEM item or mentioned IPA at all | GLINK SMEM items 478/479 allocated as Linux does, IPA left out entirely |
+| Wi-Fi WMI timeouts, now and then | A NAPI poll racing the interrupt: a schedule arriving mid-poll was dropped and that copy engine's interrupt stayed masked | Linux's "missed" semantics in our NAPI |
+| Joined, WPA2 done, but stuck at 169.254 | The `lx_transmit` entry point was still a placeholder returning `ENETDOWN` | Wired to the station's send path; DHCP, Safari |
+| Battery drained while plugged in | ABL leaves the input limit at 500 mA and the charge current at **0** | Set both to 1 A (with read-back and a 45 °C cut-off) |
 
-`soc.args` is what `tools/soc-args.py` read out of the tree; `pull-soc.sh` makes it again from the phone on
-adb. The run scripts add it to the kernel command line. Where each argument comes from in the tree:
-`devices/redwood/README.md`.
+## Repositories
 
-## What is this phone's own
-
-The kernel, loader and user space know nothing about a phone: addresses, interrupts, rails and firmware
-come from its tree and its Android. What is written for one phone is the list below. The head of each file
-says where its numbers came from; that is the map of what to rewrite.
-
-- [ ] **UEFI**: the firmware that starts the loader: devices/redwood/uefi/ is a port of Mu-Silicium; the vendor's drivers are extracted from your own phone (uefi/README.md)
-- [ ] **Display, buttons, touch**: drivers/input/hakios.input.c, hakios.buttons.c, hakios.goodix.c (the reference phone's controller; another phone has another)
-- [ ] **Storage**: hakios.ufs.c and hakios.ufshc.c (UFS); a phone with eMMC needs another driver
-- [ ] **CPU clocks**: hakios.cpufreq.c
-- [ ] **GPU**: hakios.adreno.c (Adreno 642L here: another generation needs its own firmware and registers)
-- [ ] **Wi-Fi**: hakios.wifi.c, hakios.lx.c and wifi/lx/ (the WCN6750 radio of the reference phone)
-- [ ] **Audio and battery**: hakios.adsp.c, hakios.audio.c, hakios.sound.c, hakios.speaker.c, hakios.mic.c, hakios.battery.c
-- [ ] **Cellular**: hakios.mpss.c, hakios.qmi.c, hakios.nas.c, hakios.ipa.c, hakios.cell.c; soc.args carries the addresses, the IPA layout is for IPA 4.11 (docs/cellular.md)
-- [ ] **Haptics and cameras**: hakios.haptic.c, hakios.camera.c
-
-## Configuration
-
-The kernel's settings are layered the way an Android kernel's are: the common kernel, the SoC's, this phone's
-(`docs/configs.md`). Two short files make this phone a configuration:
-
-    configs/fajita.config          CONFIG_DEVICE="fajita"   and whatever is true of this phone only
-    configs/fajita_defconfig       #include common_defconfig
-                                   #include <the SoC's fragment: sc7280.config for the SC7280 family>
-                                   #include fajita.config
-
-Then `make fajita_defconfig`. Turn on only what this phone has been shown to do; `tools/hakios-config.py check` says what the
-choice needs.
-
-The drivers are part of the configuration too (`docs/drivers-config.md`): every one is built unless a configuration leaves it out,
-and the addresses, pins and rails in each are the reference phone's. Leave out in `configs/fajita.config` what has not been
-ported to this phone yet (`# CONFIG_HAKIOS_GOODIX is not set`, ...; `configs/qemu_defconfig` leaves out all of them), and put
-each one back when it has been made to work here. `tools/hakios-config.py show` lists what is built in.
-
-## Firmware
-
-Pulled from your own phone, never committed: `devices/redwood/pull-firmware.sh`, or
-`pull-firmware-root.sh` where the firmware is readable by root only. Check with `make doctor`.
-
-## Before you open a pull request
-
-`tools/provenance-check.py` must pass: no vendor firmware, no UEFI drivers, no Apple files in the tree.
-
-## The repository
-
-A HakiOS device repository: what is true of this device and of no other. The kernel, the loader, the drivers and the tools are
-the common repository's; the sdm845 family's facts are in `soc/`, carried with the device. How the three are put together:
-[docs/porting/repositories.md](https://github.com/oosexgang/hakios-xnu-kernel/blob/main/docs/porting/repositories.md).
-
-| File | What |
+| Repository | What |
 |---|---|
-| `metal.args` | what `tools/metal-run.sh` gives this phone: its cores, its panel's rate, the threads that copy frames, the touch poll |
-| `device.conf` | what the device is, and how far each part of it works: its page in the documentation is made from it |
-| `configs/fajita_defconfig` | the common kernel, the SoC's fragment, this device's: `make fajita_defconfig` |
-| `configs/fajita.config` | what is this device's own: the drivers built in, the arguments it needs |
-| `soc/` | its SoC family's layer (sdm845): `soc.conf`, `configs/sdm845.config`, the SoC's drivers; carried here so that this one repository is all the device needs |
-| `drivers/` | drivers of its own, if it needs any (`drivers/<subsystem>/conf`, as in the common repository) |
+| **this one** (`hakios-fajita`) | The device: configs, SoC layer (`soc/`, sdm845), U-Boot board files and patch, scripts, status |
+| [`kiwiiiii-eth/hakios-xnu-kernel`](https://github.com/kiwiiiii-eth/hakios-xnu-kernel/tree/fajita), branch **`fajita`** | The kernel and every new driver: `drivers/gpu/hakios.a630.c`, `hakios.dsibl.c`, `drivers/modem/hakios.mpss845.c`, `drivers/wifi/hakios.wifi10.c` + `wifi/lx/src10/`, `drivers/input/hakios.rmi4.c`, `drivers/power/hakios.fg8998.c`, `drivers/camera/hakios.torch8998.c`, `drivers/haptic/hakios.haptic8998.c` |
+| [`oosexgang/hakios-xnu-kernel`](https://github.com/oosexgang/hakios-xnu-kernel) | Upstream HakiOS: the XNU port, loader, user space, tools, docs |
+| [`oosexgang/hakios-uefi`](https://github.com/oosexgang/hakios-uefi/tree/mac), branch `mac` | HakiOS's U-Boot patch (`u-boot/`) this port's U-Boot is built with |
 
-Every phone driver of the common repository is left out to begin with: their addresses and pins are the phone they were written
-for. Put one back in `configs/fajita.config` when it has been made to work here, and say so in `device.conf`.
+## Building and running
 
-Check with `tools/hakios-device.py check fajita`.
+This is a developer bring-up, not an installable ROM. You need a OnePlus 6T with an **unlocked bootloader**, a Mac (Apple
+silicon; the kernel builds with Xcode), and upstream's [Building from source](https://github.com/oosexgang/hakios-xnu-kernel/blob/main/docs/getting-started/building.md)
+for the general steps. What is specific to the 6T:
+
+```sh
+mkdir hakios && cd hakios
+git clone -b fajita https://github.com/kiwiiiii-eth/hakios-xnu-kernel
+git clone https://github.com/kiwiiiii-eth/hakios-fajita
+ln -s ../../hakios-fajita hakios-xnu-kernel/devices/fajita
+export PATH=$PWD/hakios-fajita/hostbin:$PATH      # macOS stand-ins for lld-link, llvm-ar, GNU sha256sum, bison, 7z
+
+cd hakios-xnu-kernel
+make fajita_defconfig && make kernel               # the kernel with the 6T's drivers (about a minute)
+xnuloader/mkidentity.sh && xnuloader/build.sh      # the loader
+sysimage/unpack.sh ~/iPhone10,3,iPhone10,6_16.5_20F66_Restore.ipsw   # YOUR IPSW, downloaded from Apple
+tools/mk-mesa.sh && tools/mk-ath11k.sh fetch && tools/mk-ath10k.sh  # Mesa (GPU), Linux's ath10k (Wi-Fi)
+GL=1 REST=1 MODEM=1 SYSTEM=1 userland/build.sh     # root.apfs and system.apfs, with Mesa and the Wi-Fi firmware
+cd ..
+
+hakios-fajita/scripts/mk-usbimg.sh                 # U-Boot + loader, packed for ABL: out/hakios-fajita-usb.img
+hakios-fajita/scripts/run-darwin-live.sh           # phone in fastboot: boot, stage the system, run, fetch the log
+```
+
+`run-darwin-live.sh` takes the phone from any state (U-Boot, loader, ABL) back to ABL fastboot, boots the loader, sends the
+2.4 GB system image over USB (about a minute), starts the kernel and copies the log to `out/logs/` while it runs. Extra boot
+arguments go in the third parameter. Set `ABL_SERIAL` if more than one device is in fastboot. The script comments are in
+Traditional Chinese.
+
+### Firmware
+
+Never committed. It goes into `hakios-xnu-kernel/fw-gpu/` and `fw-modem/`, which git ignores:
+
+| For | Files | From |
+|---|---|---|
+| GPU | `a630_gmu.bin`, `a630_sqe.fw` | linux-firmware (`qcom/`) |
+| GPU | `a630_zap.mdt` + `.bXX` | your phone (signed for its TrustZone) |
+| Modem | `mba.mbn`, `modem.mdt` + `.bXX` | your phone's `modem_a` partition |
+| Modem, Wi-Fi | the whole `image/` directory (`wlanmdsp.mbn`, `bdwlan.*`, `*.jsn`) → `fw-modem/image/` | your phone (`/vendor/firmware_mnt/image`) |
+| Wi-Fi | `ath10k/WCN3990/hw1.0/firmware-5.bin`, `board-2.bin` → `fw-modem/ath10k/` | linux-firmware |
+
+### U-Boot
+
+`prebuilt/u-boot.bin` is U-Boot (GPL-2.0+). Its corresponding source is U-Boot **v2026.07**, plus HakiOS's patch and files
+from [`oosexgang/hakios-uefi@1c65228`](https://github.com/oosexgang/hakios-uefi/tree/1c6522893266157506c767e2ca427053ed3634a8/u-boot),
+plus this repository's `u-boot/files/` and `u-boot/patches/sdm845-carveout.patch`. `scripts/fetch-uboot.sh` and
+`scripts/build-uboot-vm.sh` rebuild it in a Linux VM (`aarch64-linux-gnu-`).
+
+## Credits
+
+- **[HakiOS](https://github.com/oosexgang/hakios-xnu-kernel)** (oosexgang and contributors): the XNU port, the loader,
+  the user space and tooling this port stands on, and the redwood drivers the 6T's were modelled on.
+- **[ios-fajita](https://github.com/kiwiiiii-eth/ios-fajita)** / [ios-sweet](https://github.com/dipa-studio/ios-sweet):
+  the first attempt on this phone; its boot image parameters and the touch controller's measured init sequence.
+- **[postmarketOS](https://postmarketos.org) and mainline Linux** for SDM845: the control experiment that showed the modem
+  boots with the same firmware, and the reference for every rewrite (`a6xx_gmu`, `qcom_q6v5_mss`, `rmi4`, `qcom-fg`, …).
+  ath10k (ISC) is compiled unchanged on LinuxKPI.
+- [LineageOS](https://github.com/LineageOS/android_kernel_oneplus_sdm845) OnePlus SDM845 kernel, [Mesa](https://mesa3d.org)
+  freedreno, [U-Boot](https://u-boot.org), [bkerler/edl](https://github.com/bkerler/edl).
+
+## License
+
+Our own files here (configs, scripts, docs, `hostbin/`) are MIT ([LICENSE](LICENSE)). `u-boot/` and `prebuilt/u-boot.bin` are
+GPL-2.0+ (U-Boot), the device tree source GPL-2.0, `prebuilt/mkbootimg.py` Apache-2.0 (AOSP). The kernel drivers live in
+`hakios-xnu-kernel` under its terms (XNU-derived code APSL 2.0, the rest MIT).

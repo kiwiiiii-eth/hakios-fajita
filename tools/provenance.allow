@@ -1,0 +1,5 @@
+# What may be a binary in this repository, and why (read by hakios-xnu-kernel's tools/provenance-check.py --root .).
+# Format:  STATUS  GLOB  reason   (open = redistributable; see hakios-xnu-kernel/tools/provenance.allow)
+
+open     prebuilt/u-boot.bin           U-Boot v2026.07 (GPL-2.0+) with HakiOS's U-Boot patch (github.com/oosexgang/hakios-uefi, branch mac, 1c65228, u-boot/) and this repository's u-boot/files and u-boot/patches; how to rebuild it: README.md, "U-Boot"
+pending  prebuilt/device-tree.dtb      the OnePlus 6T's device tree as its Android boot image carries it (Linux sources, GPL-2.0); used only to pack the boot image; confirm the headers, or have each user take it from their own phone

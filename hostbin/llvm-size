@@ -1,0 +1,3 @@
+#!/bin/sh
+# tools/mk-ath10k.sh names llvm-size: Xcode's
+exec xcrun llvm-size "$@"

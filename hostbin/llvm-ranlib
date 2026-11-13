@@ -1,0 +1,3 @@
+#!/bin/sh
+# Mesa's cross file names llvm-ranlib: the system's ranlib
+exec /usr/bin/ranlib "$@"

@@ -1,0 +1,3 @@
+#!/bin/sh
+# tools/mk-ath10k.sh names llvm-nm: the system's nm
+exec /usr/bin/nm "$@"

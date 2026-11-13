@@ -1,0 +1,3 @@
+#!/bin/sh
+# sysimage/unpack.sh calls 7z: 7-Zip's 7zz (brew install sevenzip)
+exec 7zz "$@"

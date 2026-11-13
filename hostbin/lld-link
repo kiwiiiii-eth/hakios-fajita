@@ -1,0 +1,3 @@
+#!/bin/sh
+# lld-link for the loader's UEFI link, on a Mac without LLVM's lld: rust-lld in COFF mode (rustup)
+exec "$(rustc --print sysroot)/lib/rustlib/$(rustc -vV | sed -n "s/^host: //p")/bin/rust-lld" -flavor link "$@"

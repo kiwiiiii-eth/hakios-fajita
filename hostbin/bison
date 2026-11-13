@@ -1,0 +1,3 @@
+#!/bin/sh
+# Mesa needs a newer bison than macOS's 2.3 (brew install bison)
+exec "$(brew --prefix bison)/bin/bison" "$@"

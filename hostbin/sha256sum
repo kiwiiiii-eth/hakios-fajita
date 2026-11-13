@@ -1,0 +1,3 @@
+#!/bin/sh
+# Mesa's scripts use GNU sha256sum's arguments (-c --quiet): coreutils' (brew install coreutils)
+exec gsha256sum "$@"
