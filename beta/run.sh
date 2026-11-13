@@ -1,0 +1,26 @@
+#!/bin/bash
+# HakiOS on the OnePlus 6T, Beta 0.1: one run. The phone on USB, in Android, fastboot or the loader: it is taken to the
+# loader, the 2.6 GB system image is sent over USB (about a minute), and the kernel runs for SECS seconds (15 minutes by
+# default); then the phone goes back to fastboot. The log is written to work/out/logs/ while it runs.
+#
+#   ./run.sh                 a 15-minute run
+#   SECS=600 ./run.sh        a 10-minute one
+#   fastboot oem stop        (from another terminal) ends a run early, in order
+set -e
+KIT=$(cd "$(dirname "$0")" && pwd)
+WORK=${WORK:-$KIT/work}
+K=$WORK/hakios-xnu-kernel
+[ -f "$K/userland/system.apfs" ] && [ -f "$WORK/out/hakios-fajita-usb.img" ] || { echo "run.sh: run ./setup.sh first" >&2; exit 1; }
+export PATH="$WORK/hakios-fajita/hostbin:$PATH"
+NAME=${NAME:-run-$(date +%m%d-%H%M)}
+# a phone in Android: into the boot loader first (with USB debugging on; otherwise hold power + volume down)
+if adb get-state 2>/dev/null | grep -q device; then adb reboot bootloader; sleep 8; fi
+cat <<EOF
+The phone boots HakiOS; when the lock screen is up (about 4 minutes):
+  - swipe up; Settings > Wi-Fi to join a network (every boot)
+  - from this Mac, on the same network:  ssh -i $K/ssh/client_ed25519 root@<the phone's address>
+    (Settings > Wi-Fi > (i) shows the address; if the Mac cannot reach it, put both on an iPhone's hotspot)
+The log: $WORK/out/logs/$NAME.txt
+EOF
+cd "$WORK"
+SECS=${SECS:-900} NAME=$NAME USBIMG=$WORK/out/hakios-fajita-usb.img hakios-fajita/scripts/run-darwin-live.sh
