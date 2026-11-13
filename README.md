@@ -129,8 +129,10 @@ plus this repository's `u-boot/files/` and `u-boot/patches/sdm845-carveout.patch
 
 - **[HakiOS](https://github.com/oosexgang/hakios-xnu-kernel)** (oosexgang and contributors): the XNU port, the loader,
   the user space and tooling this port stands on, and the redwood drivers the 6T's were modelled on.
-- **[ios-fajita](https://github.com/kiwiiiii-eth/ios-fajita)** / [ios-sweet](https://github.com/dipa-studio/ios-sweet):
-  the first attempt on this phone; its boot image parameters and the touch controller's measured init sequence.
+- **[ios-fajita](https://github.com/edi194/ios-fajita)** by edi194, built on [ios-sweet](https://github.com/dipa-studio/ios-sweet):
+  the first iOS on this phone (software rendering, October 2026); its boot image parameters and the touch controller's
+  measured init sequence. This port started as [a fork of it](https://github.com/kiwiiiii-eth/ios-fajita) and moved to HakiOS
+  when reading the UFS stalled.
 - **[postmarketOS](https://postmarketos.org) and mainline Linux** for SDM845: the control experiment that showed the modem
   boots with the same firmware, and the reference for every rewrite (`a6xx_gmu`, `qcom_q6v5_mss`, `rmi4`, `qcom-fg`, …).
   ath10k (ISC) is compiled unchanged on LinuxKPI.

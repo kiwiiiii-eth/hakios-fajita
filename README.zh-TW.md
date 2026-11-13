@@ -85,7 +85,7 @@ ABL（原廠 bootloader）── fastboot boot ──▶ U-Boot ── hakios lo
 ## 致謝
 
 - **[HakiOS](https://github.com/oosexgang/hakios-xnu-kernel)**（oosexgang 與貢獻者）：XNU 移植、loader、使用者空間與工具，以及 6T 驅動參考的 redwood 驅動。
-- **[ios-fajita](https://github.com/kiwiiiii-eth/ios-fajita)**／[ios-sweet](https://github.com/dipa-studio/ios-sweet)：這支手機的第一次嘗試；開機映像參數和觸控初始化序列。
+- **[ios-fajita](https://github.com/edi194/ios-fajita)**（edi194，基於 [ios-sweet](https://github.com/dipa-studio/ios-sweet)）：6T 上第一個跑起 iOS 的專案（軟體繪圖，2026 年 10 月）；開機映像參數和觸控初始化序列來自它。本移植一開始是 [它的 fork](https://github.com/kiwiiiii-eth/ios-fajita)，讀 UFS 卡關後改走 HakiOS。
 - **[postmarketOS](https://postmarketos.org) 與主線 Linux** 的 SDM845 支援：證明同一份韌體能開數據機的對照實驗，以及每支重寫驅動的參考。ath10k（ISC）原封不動編在 LinuxKPI 上。
 - [LineageOS](https://github.com/LineageOS/android_kernel_oneplus_sdm845) OnePlus SDM845 核心、[Mesa](https://mesa3d.org) freedreno、[U-Boot](https://u-boot.org)、[bkerler/edl](https://github.com/bkerler/edl)。
 
