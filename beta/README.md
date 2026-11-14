@@ -1,8 +1,8 @@
-# HakiOS on the OnePlus 6T — Beta 0.1 test kit
+# HakiOS on the OnePlus 6T — Beta 0.2 test kit
 
 The Darwin (XNU) kernel and the iOS 16.5 user space on a OnePlus 6T, booted from a Mac over USB, entirely in RAM.
 Nothing is flashed: the phone keeps Android, and a reboot goes back to it.
-Release notes: https://github.com/kiwiiiii-eth/hakios-fajita/blob/main/releases/v0.1-beta.md
+Release notes: https://github.com/kiwiiiii-eth/hakios-fajita/blob/main/releases/v0.2-beta.md
 
 ## You need
 
@@ -29,7 +29,9 @@ from Android or fastboot, sends the system to it and boots it; the lock screen c
   `ssh -i work/hakios-xnu-kernel/ssh/client_ed25519 root@<the phone's address>` — `neofetch` greets you.
   If the Mac cannot reach the phone (some routers isolate their clients), put both on an iPhone's hotspot.
 - Sound: Settings → Sounds & Haptics → Ringtone; YouTube in Safari; the volume buttons. (The speaker is limited to −20 dBFS.)
-- With a SIM: LTE data with Wi-Fi off. Bluetooth: scan, pair with a Mac.
+- The microphone: record in Voice Memos and play it back.
+- With a SIM: LTE data with Wi-Fi off. Bluetooth: scan, pair with a Mac; pair a BLE keyboard (Settings → Bluetooth) and
+  type in Notes. Pair again after every boot.
 - The flashlight and brightness from Control Center.
 
 ## When something goes wrong
@@ -40,8 +42,8 @@ for about 15 seconds restarts the phone into Android.
 
 Support: issues at https://github.com/kiwiiiii-eth/hakios-fajita/issues; X [@0x718_718](https://x.com/0x718_718); donations (BTC) `bc1p6n329lsup5kpyemsvhqen70h0a4nc2ujyxflza5tfw6a4j8r4afq47gf58`.
 
-Known: no microphone, cameras or storage that survives a reboot; BLE keyboards pair but do not type; `neofetch` says
-"iPhone X" because the user space believes it is one.
+Known: no cameras or storage that survives a reboot; pairings are lost at every boot; scrolling is not yet smooth (about
+50 frames a second, drawn on the CPU side); `neofetch` says "iPhone X" because the user space believes it is one.
 
 ---
 
@@ -63,8 +65,9 @@ Darwin（XNU）核心＋iOS 16.5 使用者空間跑在 OnePlus 6T 上。由 Mac 
 **可以測**：
 - **Wi‑Fi 與 SSH**：每次開機都要在「設定 → Wi‑Fi」重新加入網路。接著從 Mac 執行 `ssh -i work/hakios-xnu-kernel/ssh/client_ed25519 root@<手機 IP>`，會看到 neofetch；連不到就讓兩台都連 iPhone 熱點。
 - **聲音**：鈴聲、YouTube、音量鍵。
+- **麥克風**：用語音備忘錄錄音再播放。
 - **行動網路**：插 SIM 卡後關掉 Wi‑Fi，用 LTE 上網。
-- **藍牙**：掃描、和 Mac 配對。
+- **藍牙**：掃描、和 Mac 配對；在「設定 → 藍牙」配對 BLE 鍵盤，到備忘錄打字（每次開機都要重新配對）。
 - **控制中心**：手電筒、亮度。
 
 **回報問題**：到 GitHub issues，附上 `work/out/logs/` 的紀錄、你做了什麼、看到什麼。
@@ -72,3 +75,5 @@ Darwin（XNU）核心＋iOS 16.5 使用者空間跑在 OnePlus 6T 上。由 Mac 
 **聯絡與支持**：GitHub issues；X [@0x718_718](https://x.com/0x718_718)；捐款（BTC）`bc1p6n329lsup5kpyemsvhqen70h0a4nc2ujyxflza5tfw6a4j8r4afq47gf58`。
 
 **其他**：`fastboot oem stop` 可以提早結束一輪；長按電源鍵約 15 秒會重開回 Android。
+
+**已知問題**：沒有相機、資料不保留、每次開機配對都會消失；滑動還不夠順（約每秒 50 幀，卡在 CPU 端準備畫面）；`neofetch` 顯示 iPhone X。

@@ -1,11 +1,11 @@
 # HakiOS on the OnePlus 6T (`fajita`)
 
 **The Darwin (XNU) kernel and the iOS 16.5 user space, running on a OnePlus 6T (Snapdragon 845).**
-It boots to the home screen with the GPU, touch, Wi-Fi, **LTE data**, **sound from the speaker**, Bluetooth, charging, vibration
-and the flashlight working, entirely from RAM.
+It boots to the home screen with the GPU, touch, Wi-Fi, **LTE data**, **sound from the speaker**, **the microphone**, Bluetooth
+(**BLE keyboards type**), charging, vibration and the flashlight working, entirely from RAM.
 
-**Current release: Beta 0.1 (`v0.1-beta`, November 2026)** — see [the release notes](releases/v0.1-beta.md) and
-[testing Beta 0.1](#testing-beta-01).
+**Current release: Beta 0.2 (`v0.2-beta`, November 2026)** — see [the release notes](releases/v0.2-beta.md) and
+[testing Beta 0.2](#testing-beta-02).
 
 This is a device port of [HakiOS](https://github.com/oosexgang/hakios-xnu-kernel), which ports the open-source XNU kernel to
 Qualcomm phones. The upstream reference phone is the POCO X5 Pro (Snapdragon 778G). The 6T is a different SoC generation, so
@@ -25,7 +25,7 @@ As seen on the phone in November 2026 (the full list is in [`device.conf`](devic
 | Area | 6T | Upstream reference (redwood) | Notes |
 |---|---|---|---|
 | Lock screen, home screen, stock apps | ✅ | ✅ | SpringBoard, Settings, Safari, Health … |
-| Touch, buttons | ✅ | ✅ | Synaptics S3706B (RMI4 over I2C), written for the 6T |
+| Touch, buttons | ✅ | ✅ | Synaptics S3706B (RMI4 over I2C), written for the 6T; read 120 times a second |
 | All 8 CPU cores, frequency scaling | ✅ | ✅ | SDM845 OSM tables, load governor |
 | GPU (OpenGL ES 3.2 via Mesa) | ✅ | ✅ | **Adreno 630 brought up from cold**, up to 60 fps |
 | Wi-Fi | ✅ | ✅ | WCN3990 + Linux ath10k; join from Settings, **5 GHz ≈ 95–110 Mbps** |
@@ -38,9 +38,9 @@ As seen on the phone in November 2026 (the full list is in [`device.conf`](devic
 | Vibration | ✅ | ✅ | PMI8998 LRA, on by default (stronger than an iPhone's; to be tuned) |
 | Storage | read-only | ✅ | `/private/var` is not kept across reboots yet |
 | **Sound (speaker)** | ✅ | ✅ | iOS sounds, keyboard clicks, YouTube: ADSP → I2S → TFA9894 amplifier (bypass); limited to −20 dBFS for the speaker's safety; on by default |
-| Microphone | ❌ | ✅ | Not started |
+| **Microphone** | ✅ | ✅ | Voice Memos records: the bottom microphone (AMIC4) → WCD9340 codec → SLIMbus → ADSP; powered only while something records |
 | Cameras | ❌ | ✅ | Not started |
-| Bluetooth | partial | ❌ | WCN3990 over UART: iOS turns Bluetooth on, scans and pairs with a Mac (`bt=4`); BLE keyboards do not type yet |
+| Bluetooth | partial | ❌ | WCN3990 over UART: iOS turns Bluetooth on, scans and pairs with a Mac (`bt=4`); **BLE keyboards pair and type** (BTLEServer, HID over GATT); pairings are not kept across reboots |
 | SSH | ✅ | ✅ | `sshd` with your own key (`RC_JOBS=rc.jobs.ssh6t`); `neofetch` preinstalled and shown at login |
 
 ## How it boots
@@ -140,15 +140,15 @@ from [`oosexgang/hakios-uefi@1c65228`](https://github.com/oosexgang/hakios-uefi/
 plus this repository's `u-boot/files/` and `u-boot/patches/sdm845-carveout.patch`. `scripts/fetch-uboot.sh` and
 `scripts/build-uboot-vm.sh` rebuild it in a Linux VM (`aarch64-linux-gnu-`).
 
-## Testing Beta 0.1
+## Testing Beta 0.2
 
-The easy way is the **test kit** on the [Beta 0.1 release](https://github.com/kiwiiiii-eth/hakios-fajita/releases/tag/v0.1-beta):
+The easy way is the **test kit** on the [Beta 0.2 release](https://github.com/kiwiiiii-eth/hakios-fajita/releases/tag/v0.2-beta):
 the kernel, the loader and our programs prebuilt, so no Xcode is needed. You bring a OnePlus 6T with an unlocked bootloader
 (nothing is flashed: Android stays), a Mac (Apple silicon; Intel should work, untried) with [Homebrew](https://brew.sh), and Apple's iOS 16.5 IPSW for iPhone X (20F66):
 
 ```sh
 brew install python sevenzip zstd coreutils android-platform-tools
-tar xzf hakios-6t-v0.1-beta.tar.gz && cd hakios-6t-v0.1-beta
+tar xzf hakios-6t-v0.2-beta.tar.gz && cd hakios-6t-v0.2-beta
 ./setup.sh ~/Downloads/iPhone10,3,iPhone10,6_16.5_20F66_Restore.ipsw   # once: firmware from your phone over adb, your IPSW, the images
 ./run.sh                                                               # every boot: a 15-minute run
 ```

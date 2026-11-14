@@ -1,9 +1,9 @@
 # HakiOS 跑在 OnePlus 6T（`fajita`）
 
 **Darwin（XNU）核心＋iOS 16.5 使用者空間，跑在 OnePlus 6T（Snapdragon 845）上。**
-開得進主畫面，GPU、觸控、Wi-Fi、**LTE 行動數據**、**喇叭出聲**、藍牙、充電、震動、手電筒都能用，整套系統只跑在記憶體裡。
+開得進主畫面，GPU、觸控、Wi-Fi、**LTE 行動數據**、**喇叭出聲**、**麥克風**、藍牙（**BLE 鍵盤能打字**）、充電、震動、手電筒都能用，整套系統只跑在記憶體裡。
 
-**目前版本：Beta 0.1（`v0.1-beta`，2026 年 11 月）**——見[版本說明](releases/v0.1-beta.md)與[測試 Beta 0.1](#測試-beta-01)。
+**目前版本：Beta 0.2（`v0.2-beta`，2026 年 11 月）**——見[版本說明](releases/v0.2-beta.md)與[測試 Beta 0.2](#測試-beta-02)。
 
 這是 [HakiOS](https://github.com/oosexgang/hakios-xnu-kernel) 的裝置移植。HakiOS 把開源的 XNU 核心搬到高通手機上，
 上游參考機是 POCO X5 Pro（Snapdragon 778G）。6T 是不同世代的晶片，所以 GPU、數據機、IPA、Wi-Fi、觸控、電池、亮度、
@@ -35,9 +35,9 @@
 | 震動 | ✅ | ✅ | PMI8998 線性馬達，預設開啟（比 iPhone 大力，待調） |
 | 儲存 | 唯讀 | ✅ | `/private/var` 重開機後不保留 |
 | **聲音（喇叭）** | ✅ | ✅ | iOS 系統音、鍵盤音、YouTube：ADSP → I2S → TFA9894 功放（旁路模式）；為保護喇叭限制在 −20 dBFS；預設開啟 |
-| 麥克風 | ❌ | ✅ | 還沒開始 |
+| **麥克風** | ✅ | ✅ | 語音備忘錄能錄音：底部麥克風（AMIC4）→ WCD9340 → SLIMbus → ADSP；只在錄音時通電 |
 | 相機 | ❌ | ✅ | 還沒開始 |
-| 藍牙 | 部分 | ❌ | WCN3990（UART）：iOS 能開藍牙、掃描、和 Mac 配對（`bt=4`）；BLE 鍵盤還不能打字 |
+| 藍牙 | 部分 | ❌ | WCN3990（UART）：iOS 能開藍牙、掃描、和 Mac 配對（`bt=4`）；**BLE 鍵盤能配對、打字**（BTLEServer）；重開機後配對不保留 |
 | SSH | ✅ | ✅ | `sshd`，只收你自己的金鑰（`RC_JOBS=rc.jobs.ssh6t`）；預裝 `neofetch`，登入就顯示 |
 
 ## 開機流程
@@ -92,9 +92,9 @@ ABL（原廠 bootloader）── fastboot boot ──▶ U-Boot ── hakios lo
 - 韌體不放在 repo 裡，要從自己的手機和 linux-firmware 取得（清單見英文版「Firmware」）。
 - `scripts/run-darwin-live.sh` 會自動把手機帶回 ABL fastboot、開 loader、用 USB 送 2.4 GB 系統映像（約 1 分鐘），開機並即時存紀錄到 `out/logs/`。
 
-## 測試 Beta 0.1
+## 測試 Beta 0.2
 
-最簡單的方式是用 [Beta 0.1 Release](https://github.com/kiwiiiii-eth/hakios-fajita/releases/tag/v0.1-beta) 上的**測試包**：
+最簡單的方式是用 [Beta 0.2 Release](https://github.com/kiwiiiii-eth/hakios-fajita/releases/tag/v0.2-beta) 上的**測試包**：
 核心、載入器和我們的程式都已預先編好，不用裝 Xcode。你要準備：
 - 已解鎖 bootloader 的 OnePlus 6T（不刷任何分區，Android 會留著）。
 - 裝好 [Homebrew](https://brew.sh) 的 Mac（Apple Silicon 已測；Intel 應可用，未實測）。
@@ -102,7 +102,7 @@ ABL（原廠 bootloader）── fastboot boot ──▶ U-Boot ── hakios lo
 
 ```sh
 brew install python sevenzip zstd coreutils android-platform-tools
-tar xzf hakios-6t-v0.1-beta.tar.gz && cd hakios-6t-v0.1-beta
+tar xzf hakios-6t-v0.2-beta.tar.gz && cd hakios-6t-v0.2-beta
 ./setup.sh ~/Downloads/iPhone10,3,iPhone10,6_16.5_20F66_Restore.ipsw   # 只跑一次：用 adb 從手機抽韌體、解 IPSW、組映像
 ./run.sh                                                               # 每次開機：跑一輪 15 分鐘
 ```
