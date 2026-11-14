@@ -34,6 +34,7 @@ python3 "$T/xnuloader/mkidentity.py" --blank > "$T/xnuloader/identity.h"
 cp "$T/xnuloader/loader.efi" "$OUT/prebuilt/loader.blank.efi"
 
 for f in "$K"/userland/obj/*; do
+	[ -f "$f" ] || continue             # (obj/macinc: the macOS SDK's libproc headers that src/socks.c is built with)
 	case "$f" in *.o|*.h|*.new) continue ;; esac
 	cp "$f" "$OUT/prebuilt/userland/"
 done
