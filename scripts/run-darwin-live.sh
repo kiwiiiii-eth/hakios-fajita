@@ -41,8 +41,12 @@ if [ -z "$FRESH" ] || [ "$(state)" != loader ]; then
 fi
 timeout 10 fastboot getvar version 2>&1 | grep -q "version:" || sleep 5
 
-# 2. iOS 系統映像進手機記憶體
-if [ "$SYS" != none ]; then
+# 2. iOS 系統映像進手機記憶體（SYS=darwin：loader 自己從 darwin 分區讀，不經 USB；先用 oem darwinput 寫進去）
+if [ "$SYS" = darwin ]; then
+	T0=$(date +%s)
+	timeout 300 fastboot oem ramdisk darwin 2>&1 | grep -q OKAY || { echo "darwin: loader 從 darwin 讀系統映像失敗（fastboot oem log 看原因）"; exit 1; }
+	echo "darwin: 系統映像從 darwin 分區讀進記憶體，$(( $(date +%s) - T0 )) 秒"
+elif [ "$SYS" != none ]; then
 	T0=$(date +%s)
 	timeout 10 fastboot oem ramdisk 2>&1 | grep -q OKAY || { echo "darwin: loader 拒絕（記憶體視窗？）"; exit 1; }
 	timeout 1800 fastboot stage "$SYS" 2>&1 | grep -q OKAY || { echo "darwin: 系統映像上傳失敗"; exit 1; }
