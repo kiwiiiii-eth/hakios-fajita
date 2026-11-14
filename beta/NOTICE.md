@@ -8,7 +8,7 @@ them this way is up to you (see https://github.com/oosexgang/hakios-xnu-kernel/b
 
 | In the kit | What | Licence | Source |
 |---|---|---|---|
-| `prebuilt/hakios-kernel` | XNU with HakiOS's and this port's drivers | APSL-2.0 (XNU); the drivers' own licences; Linux's ath10k under ISC | https://github.com/kiwiiiii-eth/hakios-xnu-kernel/tree/fajita-v0.2-beta and Apple's xnu-8796.121.2 |
+| `prebuilt/hakios-kernel` | XNU with HakiOS's and this port's drivers | APSL-2.0 (XNU); the drivers' own licences; Linux's ath10k under ISC | https://github.com/kiwiiiii-eth/hakios-xnu-kernel/tree/fajita-v0.3-beta and Apple's xnu-8796.121.2 |
 | `prebuilt/loader.blank.efi` | HakiOS's UEFI loader, blank identity | HakiOS's licence | same, `xnuloader/` |
 | `prebuilt/userland/*` (but one) | HakiOS's user-space programs | HakiOS's licence | same, `userland/src/` |
 | `prebuilt/userland/libOSMesa.8.dylib` | Mesa (OSMesa, freedreno) | MIT | https://mesa3d.org; HakiOS's patches in `tools/mesa/` |

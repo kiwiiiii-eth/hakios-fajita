@@ -1,9 +1,9 @@
 # HakiOS 跑在 OnePlus 6T（`fajita`）
 
 **Darwin（XNU）核心＋iOS 16.5 使用者空間，跑在 OnePlus 6T（Snapdragon 845）上。**
-開得進主畫面，GPU、觸控、Wi-Fi、**LTE 行動數據**、**喇叭出聲**、**麥克風**、藍牙（**BLE 鍵盤能打字**）、充電、震動、手電筒都能用，整套系統只跑在記憶體裡。
+開得進主畫面，GPU、觸控、Wi-Fi、**LTE 行動數據**、**喇叭出聲**、**麥克風**、藍牙（**BLE 鍵盤能打字**）、充電、震動、手電筒都能用，整套系統只跑在記憶體裡。Safari 能開網頁，Wi‑Fi 會自動連回已知網路。
 
-**目前版本：Beta 0.2（`v0.2-beta`，2026 年 11 月）**——見[版本說明](releases/v0.2-beta.md)與[測試 Beta 0.2](#測試-beta-02)。
+**目前版本：Beta 0.3（`v0.3-beta`，2026 年 11 月）**——見[版本說明](releases/v0.3-beta.md)與[測試 Beta 0.3](#測試-beta-03)。
 
 這是 [HakiOS](https://github.com/oosexgang/hakios-xnu-kernel) 的裝置移植。HakiOS 把開源的 XNU 核心搬到高通手機上，
 上游參考機是 POCO X5 Pro（Snapdragon 778G）。6T 是不同世代的晶片，所以 GPU、數據機、IPA、Wi-Fi、觸控、電池、亮度、
@@ -21,11 +21,11 @@
 
 | 項目 | 6T | 上游參考機（redwood） | 說明 |
 |---|---|---|---|
-| 鎖定畫面、主畫面、內建 App | ✅ | ✅ | SpringBoard、設定、Safari、健康… |
+| 鎖定畫面、主畫面、內建 App | ✅ | ✅ | SpringBoard、設定、Safari（Beta 0.3 起能載入網頁）、健康… |
 | 觸控、實體按鍵 | ✅ | ✅ | Synaptics S3706B（I2C 上的 RMI4），為 6T 自寫 |
 | 8 核心、CPU 調頻 | ✅ | ✅ | SDM845 OSM 頻率表，依負載調整 |
 | GPU（Mesa 的 OpenGL ES 3.2） | ✅ | ✅ | **Adreno 630 從零點亮**，最高 60 fps |
-| Wi-Fi | ✅ | ✅ | WCN3990＋Linux ath10k；在 iOS 設定加入網路，**5 GHz 約 95～110 Mbps** |
+| Wi-Fi | ✅ | ✅ | WCN3990＋Linux ath10k；在 iOS 設定加入網路，**5 GHz 約 95～110 Mbps**；已知網路會自動連回 |
 | 電量顯示 | ✅ | ✅ | PMI8998 電量計，顯示在狀態列 |
 | **在這個核心下充電** | ✅ | ❌ | 一輪內 41% → 64%，USB 1 A |
 | **行動網路：LTE 註冊＋上網** | ✅ | 部分（未註冊） | 遠傳 LTE 4 格；Safari 走 LTE，下載 88 MB、上傳 56 MB，IPA 0 錯誤（`ipa8=11`） |
@@ -33,7 +33,8 @@
 | **螢幕亮度** | ✅ | — | 設定與控制中心的滑桿（DSI 指令模式） |
 | 溫度保護 | ✅ | 部分 | 21 個感測器，GPU、CPU 依負載降頻 |
 | 震動 | ✅ | ✅ | PMI8998 線性馬達，預設開啟（比 iPhone 大力，待調） |
-| 儲存 | 唯讀 | ✅ | `/private/var` 重開機後不保留 |
+| 儲存 | 部分 | ✅ | `/private/var` 可跨開機保留，存在從 userdata 切出的 `darwin` 分區（開發用；測試包還不會建這個分區） |
+| 定位 | 部分 | — | 數據機 GPS（QMI LOC）接到定位服務（`gnss=1`）；路徑已通，戶外定位尚未實測 |
 | **聲音（喇叭）** | ✅ | ✅ | iOS 系統音、鍵盤音、YouTube：ADSP → I2S → TFA9894 功放（旁路模式）；為保護喇叭限制在 −20 dBFS；預設開啟 |
 | **麥克風** | ✅ | ✅ | 語音備忘錄能錄音：底部麥克風（AMIC4）→ WCD9340 → SLIMbus → ADSP；只在錄音時通電 |
 | 相機 | ❌ | ✅ | 還沒開始 |
@@ -73,6 +74,8 @@ ABL（原廠 bootloader）── fastboot boot ──▶ U-Boot ── hakios lo
 | LTE 註冊約 2 分鐘後 Wi-Fi 就掛 | 數據機在 LTE 下行斷言失敗（`ipa_dl_opt_lte.c: IPA Assert new_free_space > 0`）：IPA 沒設好，封包沒地方放；Wi-Fi 韌體跑在數據機上，所以一起死 | 把 IPA 做起來；在那之前數據機預設不上線 |
 | TrustZone 一啟動 IPA 韌體就進 QCOM | 我們起頭用的 IPA 初始化寫的是 **IPA v4.11** 的暫存器位址，SDM845 是 **v3.5.1**，寫錯地方讓匯流排卡死。更早之前，TrustZone 不收保留 mbn 填充空白的 `.mdt` | 全面改用 v3.5.1 的配置；產生緊密的 `.mdt`；驗證前先照 Linux 投匯流排票 |
 | LTE 註冊了，開數據卻一直被拒（「沒有服務」） | Android 時期留在數據機裡的設定：數據開關**關**、預設數據 SIM 是**第 2 槽** | 經使用者同意送兩個 DSD 寫入（只在數據機記憶體）；SIM 改成跟 postmarketOS 一樣、不切卡槽 |
+| Safari 一直轉圈，但網路是通的 | 這台手機上 `mobileactivationd` 一啟動就崩潰，排隊的請求永遠不回；`apsd` 啟動時問它、`amsaccountsd` 問 `apsd`，Safari 主執行緒就卡在等 AppleMediaServices（用 stackshot 抓 Safari 執行緒才看出來） | 不啟動這個服務（`mkjobs.py` DENY），問它的程式立刻拿到錯誤 |
+| 已知的 Wi-Fi 網路不會自動連回 | wifid 開機時向驅動要自動加入的最低訊號門檻（`APPLE80211_IOC_RSSI_BOUNDS`）；驅動不回答，門檻停在 **0 dBm**，每個網路都「低於最低 RSSI 門檻」——反組譯 `wifid` 才找到 | 驅動回答（−90／−20 dBm，門檻 −80）；電台還沒好時的開電源請求先接受、不拒絕 |
 
 ## 相關 repo
 
@@ -92,9 +95,9 @@ ABL（原廠 bootloader）── fastboot boot ──▶ U-Boot ── hakios lo
 - 韌體不放在 repo 裡，要從自己的手機和 linux-firmware 取得（清單見英文版「Firmware」）。
 - `scripts/run-darwin-live.sh` 會自動把手機帶回 ABL fastboot、開 loader、用 USB 送 2.4 GB 系統映像（約 1 分鐘），開機並即時存紀錄到 `out/logs/`。
 
-## 測試 Beta 0.2
+## 測試 Beta 0.3
 
-最簡單的方式是用 [Beta 0.2 Release](https://github.com/kiwiiiii-eth/hakios-fajita/releases/tag/v0.2-beta) 上的**測試包**：
+最簡單的方式是用 [Beta 0.3 Release](https://github.com/kiwiiiii-eth/hakios-fajita/releases/tag/v0.3-beta) 上的**測試包**：
 核心、載入器和我們的程式都已預先編好，不用裝 Xcode。你要準備：
 - 已解鎖 bootloader 的 OnePlus 6T（不刷任何分區，Android 會留著）。
 - 裝好 [Homebrew](https://brew.sh) 的 Mac（Apple Silicon 已測；Intel 應可用，未實測）。
@@ -102,7 +105,7 @@ ABL（原廠 bootloader）── fastboot boot ──▶ U-Boot ── hakios lo
 
 ```sh
 brew install python sevenzip zstd coreutils android-platform-tools
-tar xzf hakios-6t-v0.2-beta.tar.gz && cd hakios-6t-v0.2-beta
+tar xzf hakios-6t-v0.3-beta.tar.gz && cd hakios-6t-v0.3-beta
 ./setup.sh ~/Downloads/iPhone10,3,iPhone10,6_16.5_20F66_Restore.ipsw   # 只跑一次：用 adb 從手機抽韌體、解 IPSW、組映像
 ./run.sh                                                               # 每次開機：跑一輪 15 分鐘
 ```

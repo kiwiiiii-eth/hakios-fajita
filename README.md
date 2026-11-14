@@ -2,10 +2,11 @@
 
 **The Darwin (XNU) kernel and the iOS 16.5 user space, running on a OnePlus 6T (Snapdragon 845).**
 It boots to the home screen with the GPU, touch, Wi-Fi, **LTE data**, **sound from the speaker**, **the microphone**, Bluetooth
-(**BLE keyboards type**), charging, vibration and the flashlight working, entirely from RAM.
+(**BLE keyboards type**), charging, vibration and the flashlight working, entirely from RAM. Safari loads pages, and Wi-Fi
+joins a known network again by itself.
 
-**Current release: Beta 0.2 (`v0.2-beta`, November 2026)** — see [the release notes](releases/v0.2-beta.md) and
-[testing Beta 0.2](#testing-beta-02).
+**Current release: Beta 0.3 (`v0.3-beta`, November 2026)** — see [the release notes](releases/v0.3-beta.md) and
+[testing Beta 0.3](#testing-beta-03).
 
 This is a device port of [HakiOS](https://github.com/oosexgang/hakios-xnu-kernel), which ports the open-source XNU kernel to
 Qualcomm phones. The upstream reference phone is the POCO X5 Pro (Snapdragon 778G). The 6T is a different SoC generation, so
@@ -24,11 +25,11 @@ As seen on the phone in November 2026 (the full list is in [`device.conf`](devic
 
 | Area | 6T | Upstream reference (redwood) | Notes |
 |---|---|---|---|
-| Lock screen, home screen, stock apps | ✅ | ✅ | SpringBoard, Settings, Safari, Health … |
+| Lock screen, home screen, stock apps | ✅ | ✅ | SpringBoard, Settings, Safari (pages load: Beta 0.3), Health … |
 | Touch, buttons | ✅ | ✅ | Synaptics S3706B (RMI4 over I2C), written for the 6T; read 120 times a second |
 | All 8 CPU cores, frequency scaling | ✅ | ✅ | SDM845 OSM tables, load governor |
 | GPU (OpenGL ES 3.2 via Mesa) | ✅ | ✅ | **Adreno 630 brought up from cold**, up to 60 fps |
-| Wi-Fi | ✅ | ✅ | WCN3990 + Linux ath10k; join from Settings, **5 GHz ≈ 95–110 Mbps** |
+| Wi-Fi | ✅ | ✅ | WCN3990 + Linux ath10k; join from Settings, **5 GHz ≈ 95–110 Mbps**; a known network is joined again by itself (auto-join) |
 | Battery level | ✅ | ✅ | PMI8998 fuel gauge in the status bar |
 | **Charging under this kernel** | ✅ | ❌ | 41 % → 64 % in one session, 1 A from USB |
 | **Cellular: LTE registration and data** | ✅ | partial (no registration) | FarEasTone LTE, 4 bars; Safari over LTE, 88 MB down / 56 MB up with zero IPA errors (`ipa8=11`) |
@@ -36,7 +37,8 @@ As seen on the phone in November 2026 (the full list is in [`device.conf`](devic
 | **Screen brightness** | ✅ | — | Settings and Control Center slider (DSI command mode) |
 | Temperature guard | ✅ | partial | 21 sensors, GPU and CPU scale down with load |
 | Vibration | ✅ | ✅ | PMI8998 LRA, on by default (stronger than an iPhone's; to be tuned) |
-| Storage | read-only | ✅ | `/private/var` is not kept across reboots yet |
+| Storage | partial | ✅ | `/private/var` kept across reboots in a partition `darwin` cut from userdata (developer setups; the test kit does not make it yet) |
+| Location | partial | — | The modem's GPS (QMI LOC) to Location Services (`gnss=1`); plumbing done, an outdoor fix not yet confirmed |
 | **Sound (speaker)** | ✅ | ✅ | iOS sounds, keyboard clicks, YouTube: ADSP → I2S → TFA9894 amplifier (bypass); limited to −20 dBFS for the speaker's safety; on by default |
 | **Microphone** | ✅ | ✅ | Voice Memos records: the bottom microphone (AMIC4) → WCD9340 codec → SLIMbus → ADSP; powered only while something records |
 | Cameras | ❌ | ✅ | Not started |
@@ -77,6 +79,8 @@ The bugs that took the longest, written down for the next SDM845 port:
 | Wi-Fi died about 2 minutes after LTE registered | The modem asserted in its LTE downlink (`ipa_dl_opt_lte.c: IPA Assert new_free_space > 0`): with no IPA set up it had nowhere to put packets, and the Wi-Fi firmware runs on the modem | Bring up the IPA; until it is, the modem stays offline by default |
 | QCOM CrashDump right after TrustZone started the IPA firmware | The IPA init we started from writes **IPA v4.11** register offsets; the SDM845 has **v3.5.1**, the writes land elsewhere and hang the bus. Before that, TrustZone refused a `.mdt` that kept the mbn's padding between the program headers and the hash segment | v3.5.1 layouts throughout; a tight `.mdt`; Linux's bus votes before the authentication |
 | Registered on LTE, but every data call refused with "no service" | Left in the modem from Android: the data switch **off** and the default data SIM on **slot 2** | Two DSD writes (with consent, in the modem's memory only); the SIM provisioned as postmarketOS does it, without a slot switch |
+| Safari's pages spun for ever, though the network worked | `mobileactivationd` traps at every start on this phone and never answers what is queued for it; `apsd` asks it while starting, `amsaccountsd` asks `apsd`, and Safari's main thread waited on AppleMediaServices (found with a stackshot of Safari's threads) | The daemon is left out (`mkjobs.py` DENY); everything that asks it gets its error at once |
+| A known Wi-Fi network was never joined again by itself | wifid reads the auto-join RSSI floor once from the driver (`APPLE80211_IOC_RSSI_BOUNDS`); refused, the floor stayed **0 dBm** and every network was "Below minimum RSSI threshold" — found by disassembling `wifid` | The driver answers it (-90 / -20 dBm, floor -80); and a power-on asked for before the radio is up is taken, not refused |
 
 ## Repositories
 
@@ -140,15 +144,15 @@ from [`oosexgang/hakios-uefi@1c65228`](https://github.com/oosexgang/hakios-uefi/
 plus this repository's `u-boot/files/` and `u-boot/patches/sdm845-carveout.patch`. `scripts/fetch-uboot.sh` and
 `scripts/build-uboot-vm.sh` rebuild it in a Linux VM (`aarch64-linux-gnu-`).
 
-## Testing Beta 0.2
+## Testing Beta 0.3
 
-The easy way is the **test kit** on the [Beta 0.2 release](https://github.com/kiwiiiii-eth/hakios-fajita/releases/tag/v0.2-beta):
+The easy way is the **test kit** on the [Beta 0.3 release](https://github.com/kiwiiiii-eth/hakios-fajita/releases/tag/v0.3-beta):
 the kernel, the loader and our programs prebuilt, so no Xcode is needed. You bring a OnePlus 6T with an unlocked bootloader
 (nothing is flashed: Android stays), a Mac (Apple silicon; Intel should work, untried) with [Homebrew](https://brew.sh), and Apple's iOS 16.5 IPSW for iPhone X (20F66):
 
 ```sh
 brew install python sevenzip zstd coreutils android-platform-tools
-tar xzf hakios-6t-v0.2-beta.tar.gz && cd hakios-6t-v0.2-beta
+tar xzf hakios-6t-v0.3-beta.tar.gz && cd hakios-6t-v0.3-beta
 ./setup.sh ~/Downloads/iPhone10,3,iPhone10,6_16.5_20F66_Restore.ipsw   # once: firmware from your phone over adb, your IPSW, the images
 ./run.sh                                                               # every boot: a 15-minute run
 ```

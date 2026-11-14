@@ -1,11 +1,11 @@
 #!/bin/bash
-# HakiOS on the OnePlus 6T, Beta 0.2: make everything a run needs, from this kit, your own IPSW and your own phone.
+# HakiOS on the OnePlus 6T, Beta 0.3: make everything a run needs, from this kit, your own IPSW and your own phone.
 #
 #   ./setup.sh ~/Downloads/iPhone10,3,iPhone10,6_16.5_20F66_Restore.ipsw
 #
 # What it does (each step is skipped when its result is already there; run it again after a failure):
 #   1. checks the tools: macOS (Apple silicon or Intel), python3, fastboot, adb, 7zz, zstd, cc, curl, 15 GB free
-#   2. fetches the sources of this release from GitHub (hakios-xnu-kernel at fajita-v0.2-beta, hakios-fajita at v0.2-beta)
+#   2. fetches the sources of this release from GitHub (hakios-xnu-kernel at fajita-v0.3-beta, hakios-fajita at v0.3-beta)
 #   3. puts the kit's prebuilt kernel and programs in place (nothing is compiled)
 #   4. pulls the phone's firmware over adb (the phone in Android, USB debugging on): hakios-fajita/pull-firmware.sh
 #   5. unpacks your IPSW (sysimage/unpack.sh, about 5 minutes)
@@ -20,8 +20,8 @@ set -e
 KIT=$(cd "$(dirname "$0")" && pwd)
 WORK=${WORK:-$KIT/work}
 IPSW=${1:-${IPSW:-}}
-XNU_TAG=fajita-v0.2-beta
-DEV_TAG=v0.2-beta
+XNU_TAG=fajita-v0.3-beta
+DEV_TAG=v0.3-beta
 GH=https://github.com/kiwiiiii-eth
 K=$WORK/hakios-xnu-kernel
 D=$WORK/hakios-fajita
@@ -118,7 +118,7 @@ cp "$K/ssh/client_ed25519.pub" "$K/ssh/authorized_keys"
 
 # --- 8. the images ----------------------------------------------------------------------------------
 say "8/8 root.apfs and system.apfs (about 5 minutes)"
-(cd "$K" && PREBUILT=1 BT=1 GL=1 REST=1 MODEM=1 SYSTEM=1 RC=rc.launchd.aks RC_JOBS=rc.jobs.ssh6t QUIET=1 userland/build.sh | tail -3)
+(cd "$K" && PREBUILT=1 ALLOW=locationd BT=1 GL=1 REST=1 MODEM=1 SYSTEM=1 RC=rc.launchd.aks RC_JOBS=rc.jobs.ssh6t QUIET=1 userland/build.sh | tail -3)
 [ -f "$K/userland/system.apfs" ] && [ -f "$K/userland/root.apfs" ] || die "the images were not made"
 
 say "done. Put the phone in fastboot (or leave it in Android) and run: ./run.sh"
