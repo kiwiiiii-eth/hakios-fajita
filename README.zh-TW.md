@@ -3,7 +3,7 @@
 **Darwin（XNU）核心＋iOS 16.5 使用者空間，跑在 OnePlus 6T（Snapdragon 845）上。**
 開得進主畫面，GPU、觸控、Wi-Fi、**LTE 行動數據**、**喇叭出聲**、**麥克風**、藍牙（**BLE 鍵盤能打字**）、充電、震動、手電筒都能用，整套系統只跑在記憶體裡。Safari 能開網頁，Wi‑Fi 會自動連回已知網路。
 
-**目前版本：Beta 0.3（`v0.3-beta`，2026 年 11 月）**——見[版本說明](releases/v0.3-beta.md)與[測試 Beta 0.3](#測試-beta-03)。
+**目前版本：Beta 0.4（`v0.4-beta`，2026 年 11 月）**——可以安裝到手機、按電源鍵直接進 iOS；見[版本說明](releases/v0.4-beta.md)與[測試 Beta 0.4](#測試-beta-04)。
 
 這是 [HakiOS](https://github.com/oosexgang/hakios-xnu-kernel) 的裝置移植。HakiOS 把開源的 XNU 核心搬到高通手機上，
 上游參考機是 POCO X5 Pro（Snapdragon 778G）。6T 是不同世代的晶片，所以 GPU、數據機、IPA、Wi-Fi、觸控、電池、亮度、
@@ -95,19 +95,20 @@ ABL（原廠 bootloader）── fastboot boot ──▶ U-Boot ── hakios lo
 - 韌體不放在 repo 裡，要從自己的手機和 linux-firmware 取得（清單見英文版「Firmware」）。
 - `scripts/run-darwin-live.sh` 會自動把手機帶回 ABL fastboot、開 loader、用 USB 送 2.4 GB 系統映像（約 1 分鐘），開機並即時存紀錄到 `out/logs/`。
 
-## 測試 Beta 0.3
+## 測試 Beta 0.4
 
-最簡單的方式是用 [Beta 0.3 Release](https://github.com/kiwiiiii-eth/hakios-fajita/releases/tag/v0.3-beta) 上的**測試包**：
+最簡單的方式是用 [Beta 0.4 Release](https://github.com/kiwiiiii-eth/hakios-fajita/releases/tag/v0.4-beta) 上的**測試包**：
 核心、載入器和我們的程式都已預先編好，不用裝 Xcode。你要準備：
-- 已解鎖 bootloader 的 OnePlus 6T（不刷任何分區，Android 會留著）。
+- 已解鎖 bootloader 的 OnePlus 6T（`run.sh` 不刷任何分區，Android 會留著；`install.sh` 會清除 Android 資料，見測試包 README）。
 - 裝好 [Homebrew](https://brew.sh) 的 Mac（Apple Silicon 已測；Intel 應可用，未實測）。
 - 自己下載的 iPhone X iOS 16.5 IPSW（20F66）。
 
 ```sh
 brew install python sevenzip zstd coreutils android-platform-tools
-tar xzf hakios-6t-v0.3-beta.tar.gz && cd hakios-6t-v0.3-beta
+tar xzf hakios-6t-v0.4-beta.tar.gz && cd hakios-6t-v0.4-beta
 ./setup.sh ~/Downloads/iPhone10,3,iPhone10,6_16.5_20F66_Restore.ipsw   # 只跑一次：用 adb 從手機抽韌體、解 IPSW、組映像
-./run.sh                                                               # 每次開機：跑一輪 60 分鐘
+./run.sh                                                               # 從 Mac 開機跑一輪 60 分鐘，不刷任何分區
+./install.sh                                                           # 或安裝到手機：之後按電源鍵直接進 iOS（會清除 Android 資料）
 ```
 
 - 每一步在做什麼、進主畫面後可以測什麼，見測試包的 [README](beta/README.md)。
