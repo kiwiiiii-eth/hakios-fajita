@@ -28,6 +28,9 @@ CONFIG_FASTBOOT_CMD_OEM_CONSOLE=y
 CONFIG_FASTBOOT_OEM_RUN=y
 # CONFIG_REQUIRE_SERIAL_CONSOLE is not set
 
+# no U-Boot logo on the screen as it starts: the HakiOS loader draws the boot screen (Beta 0.5)
+# CONFIG_VIDEO_LOGO is not set
+
 # the fastboot buffer takes a whole HKUB container: the loader and a payload of up to 63 MiB
 CONFIG_FASTBOOT_BUF_SIZE=0x8000000
 

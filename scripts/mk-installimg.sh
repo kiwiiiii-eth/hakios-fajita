@@ -11,6 +11,10 @@
 #                                 the slot is not marked; EXTRA="halt_psci=1" to try iOS's shut down and restart (PSCI)
 #
 # The kernel's clock: the host's time when this image is built (epoch=); iOS sets it right from the network.
+#
+# The boot screen while the loader reads the system image (xnuloader/bootscreen.c): HakiOS, a progress bar and one line;
+# DEBUG=1 mk-installimg.sh adds the loader's log at the bottom (bootscreen=log), for development and for a phone that
+# does not start.
 set -e
 REPO=$(cd -P "$(dirname "$0")/.." && pwd); ROOT=${HAKIOS_ROOT:-$(dirname "$REPO")}; K=$ROOT/hakios-xnu-kernel
 # U-Boot: installed, the install environment (prebuilt/u-boot-install.bin, hakios_fajita_install_defconfig: the reboot
@@ -30,7 +34,7 @@ else
 	END="halt_psci=1"; OUTNAME=hakios-fajita-install.img; UB=$UB_INSTALL; INSTALLED=--installed
 	[ -f "$UB" ] || { echo "mk-installimg.sh: no $UB: build it (u-boot/files/configs/hakios_fajita_install_defconfig)" >&2; exit 1; }
 fi
-CMDLINE="$END epoch=$(date +%s) sb_delay=8 ${PRE:-} $ARGS $SOCARGS${EXTRA:+ $EXTRA}"
+CMDLINE="$END epoch=$(date +%s) sb_delay=8${DEBUG:+ bootscreen=log} ${PRE:-} $ARGS $SOCARGS${EXTRA:+ $EXTRA}"
 echo "mk-installimg.sh: cmdline=$CMDLINE"
 mkdir -p "$K/build" "$ROOT/out"
 cd "$K"
