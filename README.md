@@ -2,8 +2,9 @@
 
 **The Darwin (XNU) kernel and the iOS 16.5 user space, running on a OnePlus 6T (Snapdragon 845).**
 It boots to the home screen with the GPU, touch, Wi-Fi, **LTE data**, **sound from the speaker**, **the microphone**, Bluetooth
-(**BLE keyboards type**), charging, vibration and the flashlight working, entirely from RAM. Safari loads pages, and Wi-Fi
-joins a known network again by itself.
+(**BLE keyboards type**), charging, vibration and the flashlight working. Run from a Mac it lives in RAM; **installed, the
+phone starts iOS by itself** from its power button, behind a boot screen, with the right time and time zone and its data
+on a 20 GB volume of its own. Safari loads pages, and Wi-Fi joins a known network again by itself.
 
 **Current release: Beta 0.5 (`v0.5-beta`, November 2026)** — installed, the phone starts iOS by itself, with its data on
 a 20 GB volume of its own; see [the release notes](releases/v0.5-beta.md) and [testing Beta 0.5](#testing-beta-05).
@@ -26,19 +27,21 @@ As seen on the phone in November 2026 (the full list is in [`device.conf`](devic
 | Area | 6T | Upstream reference (redwood) | Notes |
 |---|---|---|---|
 | Lock screen, home screen, stock apps | ✅ | ✅ | SpringBoard, Settings, Safari (pages load: Beta 0.3), Health … |
+| **Boots by itself (installed)** | ✅ | ✅ | `install.sh` (Beta 0.4): HakiOS in the boot partition of the slot Android does not use, the system image read from `darwin` behind a boot screen with a progress bar (Beta 0.5); Shut Down and Restart work; Android stays a `set_active` away |
+| Clock and time zone | ✅ | — | The PMIC's real-time clock with a kept offset; the time zone from the cellular network (NITZ) |
 | Touch, buttons | ✅ | ✅ | Synaptics S3706B (RMI4 over I2C), written for the 6T; read 120 times a second |
 | All 8 CPU cores, frequency scaling | ✅ | ✅ | SDM845 OSM tables, load governor |
 | GPU (OpenGL ES 3.2 via Mesa) | ✅ | ✅ | **Adreno 630 brought up from cold**, up to 60 fps |
 | Wi-Fi | ✅ | ✅ | WCN3990 + Linux ath10k; join from Settings, **5 GHz ≈ 95–110 Mbps**; a known network is joined again by itself (auto-join) |
 | Battery level | ✅ | ✅ | PMI8998 fuel gauge in the status bar |
 | **Charging under this kernel** | ✅ | ❌ | 41 % → 64 % in one session, 1 A from USB |
-| **Cellular: LTE registration and data** | ✅ | partial (no registration) | FarEasTone LTE, 4 bars; Safari over LTE, 88 MB down / 56 MB up with zero IPA errors (`ipa8=11`) |
+| **Cellular: LTE registration and data** | ✅ | partial (no registration) | FarEasTone LTE, 4 bars, the carrier's name in the status bar; Safari over LTE, 88 MB down / 56 MB up with zero IPA errors (`ipa8=11`) |
 | **Flashlight** | ✅ | partial | From Control Center's button |
 | **Screen brightness** | ✅ | — | Settings and Control Center slider (DSI command mode) |
 | Temperature guard | ✅ | partial | 21 sensors, GPU and CPU scale down with load |
 | Vibration | ✅ | ✅ | PMI8998 LRA, on by default (stronger than an iPhone's; to be tuned) |
-| Storage | partial | ✅ | `/private/var` kept across reboots in a partition `darwin` cut from userdata (developer setups; the test kit does not make it yet) |
-| Location | partial | — | The modem's GPS (QMI LOC) to Location Services (`gnss=1`); plumbing done, an outdoor fix not yet confirmed |
+| **Storage** | ✅ | ✅ | `/private/var` is a 20 GB journaled HFS Plus volume in the partition `darwin` cut from userdata (Beta 0.5): kept on the flash, Settings shows the space and iPhone Storage counts it |
+| Location | partial | — | The modem's GPS (QMI LOC) to Location Services (`gnss=1`): satellites tracked (23 in view indoors), Location Services turned on by itself, Safari's geolocation gets a position; Apple Maps needs an activated device |
 | **Sound (speaker)** | ✅ | ✅ | iOS sounds, keyboard clicks, YouTube: ADSP → I2S → TFA9894 amplifier (bypass); limited to −20 dBFS for the speaker's safety; on by default |
 | **Microphone** | ✅ | ✅ | Voice Memos records: the bottom microphone (AMIC4) → WCD9340 codec → SLIMbus → ADSP; powered only while something records |
 | Cameras | ❌ | ✅ | Not started |
@@ -47,7 +50,8 @@ As seen on the phone in November 2026 (the full list is in [`device.conf`](devic
 
 ## How it boots
 
-Nothing is flashed. A reboot brings the phone back to its own Android.
+Two ways. **From a Mac** (`run.sh`, `scripts/run-darwin-live.sh`): nothing is flashed, the system image comes over USB,
+and a reboot brings the phone back to its own Android.
 
 ```
 ABL (stock bootloader)  ── fastboot boot ──▶  U-Boot  ── hakios load ──▶  HakiOS loader (UEFI app)
@@ -56,11 +60,24 @@ ABL (stock bootloader)  ── fastboot boot ──▶  U-Boot  ── hakios lo
                                                                     XNU 8796 ─▶ launchd ─▶ SpringBoard
 ```
 
-**What is written to the phone:** one PMIC register (the reboot reason `0x88f`, so a reset lands in fastboot). While the
-system runs, the charger's input and current limits, the flash LED and the haptic block, each limited to a register
-allow-list and read back after every write. No partition is written: `persist`, `modemst*`, `fsg`, `xbl`, `abl` and `tz`
-are never touched. The modem's file system is served read-only from a copy in RAM. With `ipa8=11`, two of the modem's data
-settings (data switch on, default data SIM) are changed in the modem's memory only, not in its partitions.
+**Installed** (`beta/install.sh`, Beta 0.4 and 0.5): the power button starts it, with no Mac.
+
+```
+power ─▶ ABL ─▶ boot_X: U-Boot ─▶ HakiOS loader ── the system image from darwin (17 s), a boot screen ──▶ XNU ─▶ launchd
+                (HakiOS's slot)       │  marks the slot successful, as Android does                  /private/var: HFS Plus in darwin
+                                      └─ no system image to read: back to ABL's fastboot
+```
+
+**What is written to the phone.** From a Mac: one PMIC register (the reboot reason `0x88f`, so a reset lands in
+fastboot), and no partition. Installed, with your consent in `install.sh`, after a backup of everything it changes
+(`uninstall.sh` puts it back): LUN 0's partition table (userdata shortened, a partition `darwin` of its last 32 GiB:
+**Android's data is erased**; only those two entries may change, checked by the loader against both copies and read
+back), `darwin` itself (the system image, the data volume), the boot partition of HakiOS's slot with that slot's dtbo
+and vbmeta taken from Android's, and that slot's A/B attributes (marked successful). Either way, while the system runs:
+the charger's input and current limits, the flash LED and the haptic block, each limited to a register allow-list and
+read back after every write. `persist`, `modemst*`, `fsg`, `xbl`, `abl` and `tz` are never touched. The modem's file
+system is served read-only from a copy in RAM. With `ipa8=11`, two of the modem's data settings (data switch on,
+default data SIM) are changed in the modem's memory only, not in its partitions.
 
 ## The hard parts
 
@@ -81,19 +98,23 @@ The bugs that took the longest, written down for the next SDM845 port:
 | Registered on LTE, but every data call refused with "no service" | Left in the modem from Android: the data switch **off** and the default data SIM on **slot 2** | Two DSD writes (with consent, in the modem's memory only); the SIM provisioned as postmarketOS does it, without a slot switch |
 | Safari's pages spun for ever, though the network worked | `mobileactivationd` traps at every start on this phone and never answers what is queued for it; `apsd` asks it while starting, `amsaccountsd` asks `apsd`, and Safari's main thread waited on AppleMediaServices (found with a stackshot of Safari's threads) | The daemon is left out (`mkjobs.py` DENY); everything that asks it gets its error at once |
 | A known Wi-Fi network was never joined again by itself | wifid reads the auto-join RSSI floor once from the driver (`APPLE80211_IOC_RSSI_BOUNDS`); refused, the floor stayed **0 dBm** and every network was "Below minimum RSSI threshold" — found by disassembling `wifid` | The driver answers it (-90 / -20 dBm, floor -80); and a power-on asked for before the radio is up is taken, not refused |
+| Settings said the phone held 1 GB | `/private/var` was a memory filesystem (a quarter of the RAM), packed into `darwin` as the system shut down | An HFS Plus volume in `darwin` past the packed store's slots; the store moved into it once, and only when it comes back whole |
+| iPhone Storage stayed empty | It counts the root's space, and the root is the read-only system image (2.6 GB, nothing free) | The root reports the data volume's space (`vfs_getattr`), as an iPhone's root shares its container's |
+| The clock went back hours after a forced restart | The PMIC's real-time clock started counting from zero again after the phone was got out of a stuck loader, and the kept offset then pointed hours back | The offset is kept with its count; a count that went back, or a clock that would, leaves the time as the image has it |
+| The carrier's name showed as four boxes | iOS draws it in PingFang's Medium weight, which the trimmed system font had dropped | Medium kept |
 
 ## Repositories
 
 | Repository | What |
 |---|---|
 | **this one** (`hakios-fajita`) | The device: configs, SoC layer (`soc/`, sdm845), U-Boot board files and patch, scripts, status |
-| [`kiwiiiii-eth/hakios-xnu-kernel`](https://github.com/kiwiiiii-eth/hakios-xnu-kernel/tree/fajita), branch **`fajita`** | The kernel and every new driver: `drivers/gpu/hakios.a630.c`, `hakios.dsibl.c`, `drivers/modem/hakios.mpss845.c`, `drivers/wifi/hakios.wifi10.c` + `wifi/lx/src10/`, `drivers/modem/hakios.ipa.c` (IPA 3.5.1), `drivers/input/hakios.rmi4.c`, `drivers/power/hakios.fg8998.c`, `drivers/camera/hakios.torch8998.c`, `drivers/haptic/hakios.haptic8998.c`, `drivers/audio/hakios.adsp845.c`, `drivers/bluetooth/hakios.bt3990.c` |
+| [`kiwiiiii-eth/hakios-xnu-kernel`](https://github.com/kiwiiiii-eth/hakios-xnu-kernel/tree/fajita), branch **`fajita`** | The kernel and every new driver: `drivers/gpu/hakios.a630.c`, `hakios.dsibl.c`, `drivers/modem/hakios.mpss845.c`, `drivers/wifi/hakios.wifi10.c` + `wifi/lx/src10/`, `drivers/modem/hakios.ipa.c` (IPA 3.5.1), `drivers/input/hakios.rmi4.c`, `drivers/power/hakios.fg8998.c`, `drivers/camera/hakios.torch8998.c`, `drivers/haptic/hakios.haptic8998.c`, `drivers/audio/hakios.adsp845.c`, `drivers/bluetooth/hakios.bt3990.c`; the loader's partition-table rules and boot screen (`xnuloader/gpt.c`, `bootscreen.c`) |
 | [`oosexgang/hakios-xnu-kernel`](https://github.com/oosexgang/hakios-xnu-kernel) | Upstream HakiOS: the XNU port, loader, user space, tools, docs |
 | [`oosexgang/hakios-uefi`](https://github.com/oosexgang/hakios-uefi/tree/mac), branch `mac` | HakiOS's U-Boot patch (`u-boot/`) this port's U-Boot is built with |
 
 ## Building and running
 
-This is a developer bring-up, not an installable ROM. You need a OnePlus 6T with an **unlocked bootloader**, a Mac (Apple
+This is still a developer bring-up. You need a OnePlus 6T with an **unlocked bootloader**, a Mac (Apple
 silicon; the kernel builds with Xcode), and upstream's [Building from source](https://github.com/oosexgang/hakios-xnu-kernel/blob/main/docs/getting-started/building.md)
 for the general steps. What is specific to the 6T:
 
@@ -114,6 +135,7 @@ cd ..
 
 hakios-fajita/scripts/mk-usbimg.sh                 # U-Boot + loader, packed for ABL: out/hakios-fajita-usb.img
 hakios-fajita/scripts/run-darwin-live.sh           # phone in fastboot: boot, stage the system, run, fetch the log
+WORK=$PWD hakios-fajita/beta/install.sh            # or install it (ERASES ANDROID'S DATA: see beta/README.md)
 ```
 
 `PYTHONSAFEPATH=1`: with Homebrew's Python 3.15, XNU's own `tools/lldbmacros/core/collections.py` shadows the standard
@@ -142,7 +164,9 @@ Never committed. It goes into `hakios-xnu-kernel/fw-gpu/` and `fw-modem/`, which
 `prebuilt/u-boot.bin` is U-Boot (GPL-2.0+). Its corresponding source is U-Boot **v2026.07**, plus HakiOS's patch and files
 from [`oosexgang/hakios-uefi@1c65228`](https://github.com/oosexgang/hakios-uefi/tree/1c6522893266157506c767e2ca427053ed3634a8/u-boot),
 plus this repository's `u-boot/files/` and `u-boot/patches/sdm845-carveout.patch`. `scripts/fetch-uboot.sh` and
-`scripts/build-uboot-vm.sh` rebuild it in a Linux VM (`aarch64-linux-gnu-`).
+`scripts/build-uboot-vm.sh` rebuild it in a Linux VM (`aarch64-linux-gnu-`). `prebuilt/u-boot-install.bin` is the same
+U-Boot built with `hakios_fajita_install_defconfig` (the installed environment: nothing of its own on the screen, the
+reboot reason cleared before the loader, ABL's fastboot if the loader comes back).
 
 ## Testing Beta 0.5
 
@@ -188,6 +212,7 @@ The log of each run is written to `out/logs/` while it runs; attach it to an iss
 
 ## License
 
-Our own files here (configs, scripts, docs, `hostbin/`) are MIT ([LICENSE](LICENSE)). `u-boot/` and `prebuilt/u-boot.bin` are
-GPL-2.0+ (U-Boot), the device tree source GPL-2.0, `prebuilt/mkbootimg.py` Apache-2.0 (AOSP). The kernel drivers live in
-`hakios-xnu-kernel` under its terms (XNU-derived code APSL 2.0, the rest MIT).
+Our own files here (configs, scripts, docs, `hostbin/`) are MIT ([LICENSE](LICENSE)). `u-boot/`, `prebuilt/u-boot.bin` and
+`prebuilt/u-boot-install.bin` are GPL-2.0+ (U-Boot), the device tree source GPL-2.0, `prebuilt/mkbootimg.py` Apache-2.0
+(AOSP). The kernel drivers live in `hakios-xnu-kernel` under its terms (XNU-derived code APSL 2.0, the rest MIT); the boot
+screen's pictures there are drawn from Inter and JetBrains Mono (SIL Open Font License 1.1).

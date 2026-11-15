@@ -76,8 +76,9 @@ journaled.
   type in Notes. Pair again after every boot.
 - The flashlight and brightness from Control Center.
 - Safari: open any site (pages load as of Beta 0.3). Wi-Fi off and on in Settings: the network is joined again by itself.
-- Location (experimental): `EXTRA="gnss=1" ./run.sh`, outdoors with a view of the sky, then Settings → Privacy → Location
-  Services and Maps. Reports welcome: an outdoor fix has not been confirmed yet.
+- Location (experimental): `EXTRA="gnss=1" ./run.sh` (or an install image built with `EXTRA="gnss=1"`), outdoors with a
+  view of the sky, then Google Maps in Safari (Apple Maps needs an activated device and shows no map). Location
+  Services turn on by themselves; satellites are seen even indoors. Reports welcome: an outdoor GPS fix is not yet confirmed.
 
 ## When something goes wrong
 
@@ -134,7 +135,7 @@ Darwin（XNU）核心＋iOS 16.5 使用者空間跑在 OnePlus 6T 上（Beta 0.5
 - **藍牙**：掃描、和 Mac 配對；在「設定 → 藍牙」配對 BLE 鍵盤，到備忘錄打字（每次開機都要重新配對）。
 - **控制中心**：手電筒、亮度。
 - **Safari**：開任何網站（Beta 0.3 起能載入）。在設定把 Wi‑Fi 關掉再打開，會自動連回剛才的網路。
-- **定位（實驗中）**：`EXTRA="gnss=1" ./run.sh`，到戶外看得到天空的地方，再開「設定 → 隱私權 → 定位服務」和地圖。戶外定位還沒實測成功，歡迎回報。
+- **定位（實驗中）**：`EXTRA="gnss=1" ./run.sh`（或打包安裝映像時帶 `EXTRA="gnss=1"`），到戶外看得到天空的地方，用 Safari 開 Google 地圖（Apple 地圖需要已啟用的裝置，不會顯示圖資）。定位服務會自動打開，室內就能看到衛星。戶外 GPS 定位還沒確認，歡迎回報。
 
 **回報問題**：到 GitHub issues，附上 `work/out/logs/` 的紀錄、你做了什麼、看到什麼。
 
