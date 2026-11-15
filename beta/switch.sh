@@ -14,8 +14,8 @@ command -v fastboot >/dev/null || die "no fastboot (brew install android-platfor
 to_abl
 SERIAL=$(fastboot devices | awk '$2=="fastboot" && $1!="xnuloader" {print $1; exit}')
 BK=$BACKUPS/$SERIAL
-TARGET=$(sed -n 's/.* target=\([ab]\).*/\1/p' "$BK/info.txt" 2>/dev/null)
-[ -n "$TARGET" ] || die "no record of an install on this phone ($BK/info.txt)"
+TARGET=$(recorded_slot "$BK")
+[ -n "$TARGET" ] || die "no record of an install on this phone ($BK)"
 [ "$1" = hakios ] && SLOT=$TARGET || SLOT=$(other_slot "$TARGET")
 fbq set_active "$SLOT" >/dev/null || die "fastboot set_active $SLOT failed: $FB_OUT"
 [ "$(getvar current-slot)" = "$SLOT" ] || die "ABL did not make slot $SLOT active"

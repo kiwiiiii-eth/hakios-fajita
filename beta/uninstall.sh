@@ -27,7 +27,8 @@ BK=$BACKUPS/$SERIAL
 (cd "$BK" && shasum -a 256 -c SHA256SUMS >/dev/null) || die "the backup in $BK does not check (SHA256SUMS)"
 mkdir -p "$BK/logs"
 LOG=$BK/logs/uninstall-$(date +%Y%m%d-%H%M%S).txt
-TARGET=$(sed -n 's/.* target=\([ab]\).*/\1/p' "$BK/info.txt")
+TARGET=$(recorded_slot "$BK")
+[ -n "$TARGET" ] || die "no record of the slot HakiOS is in ($BK)"
 ANDROID=$(other_slot "$TARGET")
 BOOT=$BK/boot_$TARGET.img
 if carries_hakios "$BOOT"; then
@@ -57,6 +58,9 @@ if [ -z "${KEEP_DARWIN:-}" ]; then
 	if [ "$DW" = none ] && [ -f "$BK/unwipe-pending" ]; then
 		# the last run put the table back and stopped before userdata was made again
 		to_abl
+		orig=$(python3 "$GPTPLAN" info "$BK/gpt-head.bin" "$BK/gpt-tail.bin" | sed -n 's/^TABLE userdata=\([0-9]*\)\.\.\([0-9]*\).*/\1 \2/p')
+		want=$(( (${orig#* } - ${orig% *} + 1) * 4096 )); have=$(getvar partition-size:userdata)
+		[ -n "$have" ] && [ $((have)) -eq $want ] || die "ABL gives userdata $have bytes, not $want: nothing erased"
 		say "making userdata again (fastboot -w), as the last run did not"
 		fb -w >/dev/null || { echo "$FB_OUT" >&2; die "fastboot -w failed: run ./uninstall.sh again"; }
 		printf '%s\n' "$FB_OUT" | grep -q "Writing 'userdata'" || { echo "$FB_OUT" >&2; die "fastboot -w did not format userdata"; }

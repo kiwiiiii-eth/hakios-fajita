@@ -136,4 +136,16 @@ st_flag slot '"b"'; before=$(shasum "$FAKE/parts/boot_b.img")
 "$B/install.sh" > "$T/out12.txt" 2>&1 < /dev/null && R=0 || R=$?
 check "refused, boot_b (Android) untouched" '[ $R -ne 0 ] && grep -q "holds no HakiOS" "$T/out12.txt" && [ "$before" = "$(shasum "$FAKE/parts/boot_b.img")" ]'
 
+echo "== as the refusal says: TARGET=a, then an ordinary update, switching, uninstalling"
+st_flag mode '"abl"'
+TARGET=a ERASE_ANDROID_DATA=yes "$B/install.sh" > "$T/out13.txt" 2>&1 < /dev/null || { cat "$T/out13.txt"; exit 1; }
+check "HakiOS into slot a, remembered; Android's boot_b untouched" '[ "$(st slot)" = a ] && [ "$(cat "$BACKUPS/b1289b47/slot")" = a ] && [ "$before" = "$(shasum "$FAKE/parts/boot_b.img")" ]'
+st_flag mode '"abl"'
+"$B/install.sh" > "$T/out14.txt" 2>&1 < /dev/null || { cat "$T/out14.txt"; exit 1; }
+check "an ordinary update goes into slot a; boot_b untouched" 'grep -q "goes into slot a" "$T/out14.txt" && [ "$before" = "$(shasum "$FAKE/parts/boot_b.img")" ]'
+st_flag mode '"abl"'; "$B/switch.sh" android > "$T/out15.txt" 2>&1 || { cat "$T/out15.txt"; exit 1; }
+check "switch.sh android makes slot b (Android's now) active" '[ "$(st slot)" = b ]'
+st_flag mode '"abl"'; REMOVE=yes KEEP_DARWIN=1 "$B/uninstall.sh" > "$T/out16.txt" 2>&1 || { cat "$T/out16.txt"; exit 1; }
+check "uninstall puts slot a back as it was before the first install, slot b active, boot_b untouched" 'cmp -s "$FAKE/parts/boot_a.img" "$T/parts.orig/boot_a.img" && [ "$(st slot)" = b ] && [ "$before" = "$(shasum "$FAKE/parts/boot_b.img")" ]'
+
 [ -z "$FAILED" ] && echo "all as expected" || { echo "SOME FAILED (calls: $FAKE/calls.txt)"; trap - EXIT; exit 1; }

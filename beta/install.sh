@@ -56,10 +56,9 @@ HAKIOS_IN=
 for s in a b; do carries_hakios "$T/boot_$s.img" && HAKIOS_IN="$HAKIOS_IN$s"; done
 if [ -n "${TARGET:-}" ]; then
 	case "$TARGET" in a|b) ;; *) die "TARGET is a or b" ;; esac
-elif [ -f "$BK/info.txt" ]; then
-	# installed before from this Mac: the slot it went into, whatever its boot partition holds now
-	TARGET=$(sed -n 's/.* target=\([ab]\).*/\1/p' "$BK/info.txt")
-	[ -n "$TARGET" ] || die "$BK/info.txt names no slot"
+elif [ -n "$(recorded_slot "$BK")" ]; then
+	# installed before from this Mac: the slot it last went into, whatever its boot partition holds now
+	TARGET=$(recorded_slot "$BK")
 elif [ ${#HAKIOS_IN} -eq 1 ]; then TARGET=$HAKIOS_IN
 elif [ "$HAKIOS_IN" = ab ]; then TARGET=$CUR
 else TARGET=$(other_slot "$CUR"); fi
@@ -67,7 +66,7 @@ ANDROID=$(other_slot "$TARGET")
 # never the slot the phone is using unless HakiOS is in it: after an Android update the slot recorded may hold Android
 if [ "$TARGET" = "$CUR" ] && ! carries_hakios "$T/boot_$TARGET.img"; then
 	die "slot $TARGET is the one in use and holds no HakiOS (Android, after an update?): nothing was changed.
-TARGET=$ANDROID ./install.sh installs into the other slot"
+TARGET=$ANDROID ./install.sh installs into the other slot (and is remembered: updates, switch.sh and uninstall.sh follow)"
 fi
 say "   HakiOS goes into slot $TARGET; slot $ANDROID is left as it is (current slot: $CUR; HakiOS in: ${HAKIOS_IN:-none})"
 if [ ! -f "$BK/info.txt" ]; then
@@ -192,6 +191,7 @@ same_prefix "$IMG" "$T/boot_$TARGET.img" || die "boot_$TARGET read back is not t
 to_abl
 fb set_active "$TARGET" >/dev/null || die "fastboot set_active $TARGET failed"
 [ "$(getvar current-slot)" = "$TARGET" ] || die "ABL did not make slot $TARGET active"
+echo "$TARGET" > "$BK/slot"
 say "   boot_$TARGET flashed and read back; slot $TARGET active"
 if [ -n "${NO_REBOOT:-}" ]; then say "done; the phone stays in fastboot (NO_REBOOT): fastboot reboot starts HakiOS"; exit 0; fi
 fbq reboot >/dev/null || true

@@ -125,3 +125,11 @@ carries_hakios() { LC_ALL=C grep -a -q "HKUB" "$1" && LC_ALL=C grep -a -q "XNUP"
 same_prefix() { head -c "$(stat -f %z "$1")" "$2" | cmp -s - "$1"; }
 
 other_slot() { [ "$1" = a ] && echo b || echo a; }
+
+# the slot HakiOS was last installed into from this Mac ($BK/slot, written by every install that finished; an
+# install from before it was kept: the target in info.txt), or nothing
+recorded_slot() {
+	local s
+	s=$(cat "$1/slot" 2>/dev/null || sed -n 's/.* target=\([ab]\).*/\1/p' "$1/info.txt" 2>/dev/null)
+	case "$s" in a|b) echo "$s" ;; esac
+}
