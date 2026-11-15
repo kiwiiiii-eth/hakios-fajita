@@ -1,0 +1,42 @@
+<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="common.css"><script src="theme.js"></script>
+<style>
+.card { width: 1200px; position: relative; }
+.row-h { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 9px; }
+.row-h b { font-size: 15px; font-weight: 650; }
+.row-h small { font-size: 12.5px; color: var(--muted); }
+.bar { display: flex; height: 64px; border-radius: 10px; overflow: hidden; border: 1.5px solid var(--line); }
+.seg { padding: 10px 14px; display: flex; flex-direction: column; justify-content: center; border-right: 1.5px solid var(--line); min-width: 0; }
+.seg:last-child { border-right: 0; }
+.seg b { font-size: 14px; font-weight: 650; white-space: nowrap; }
+.seg small { font-size: 12px; opacity: .85; margin-top: 2px; white-space: nowrap; }
+.stock { background: var(--stock-bg); color: var(--stock-tx); }
+.haki { background: var(--haki-bg); color: var(--haki-tx); }
+.ios { background: var(--ios-bg); color: var(--ios-tx); }
+.old { background: var(--old-bg); color: var(--old-tx); }
+.funnel { height: 70px; width: 100%; display: block; }
+.ticks { white-space: nowrap; position: relative; height: 22px; margin-top: 6px; font-size: 11.5px; color: var(--muted); }
+.ticks span { position: absolute; transform: translateX(-50%); }
+.ticks span:first-child { transform: none; }
+.ticks span:last-child { transform: translateX(-100%); }
+</style>
+<div class="card">
+  <div class="row-h"><b>The phone's flash (UFS LUN 0, 116 GB)</b><small>install.sh shortens userdata and adds darwin; nothing else changes</small></div>
+  <div class="bar" id="lun">
+    <div class="seg stock" style="width:5.3%;padding:10px 0;align-items:center"><small>other</small></div>
+    <div class="seg stock" style="width:67.1%"><b>userdata</b><small>Android's data, shortened (erased at install)</small></div>
+    <div class="seg haki" style="width:27.6%"><b>darwin</b><small>32 GiB by default (20–64)</small></div>
+  </div>
+  <svg class="funnel" viewBox="0 0 1136 70" preserveAspectRatio="none">
+    <polygon points="821,0 1136,0 1136,70 0,70" style="fill: var(--haki-bd); opacity: .14"/>
+    <line x1="821" y1="0" x2="0" y2="70" style="stroke: var(--haki-bd); stroke-width: 1.2; opacity: .6"/>
+    <line x1="1136" y1="0" x2="1136" y2="70" style="stroke: var(--haki-bd); stroke-width: 1.2; opacity: .6"/>
+  </svg>
+  <div class="row-h"><b>Inside darwin</b><small>offsets from darwin's start</small></div>
+  <div class="bar">
+    <div class="seg ios" style="width:25%"><b>System image</b><small>iOS 16.5, 2.5 GB, read-only</small></div>
+    <div class="seg old" style="width:12.5%"><b>0.4 store</b><small>fallback</small></div>
+    <div class="seg haki" style="width:62.5%"><b>Data volume → /private/var</b><small>HFS Plus, journaled, about 20 GB: settings, Wi-Fi, apps' data, photos</small></div>
+  </div>
+  <div class="ticks mono"><span style="left:0">0</span><span style="left:25%">8 GiB</span><span style="left:37.5%">12 GiB</span><span style="left:100%">32 GiB</span></div>
+  <div class="legend"><span class="k-stock">Android's</span><span class="k-ios">iOS (from your IPSW)</span><span class="k-haki">HakiOS's</span><span class="k-old">Beta 0.4's store</span></div>
+</div>

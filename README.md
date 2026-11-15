@@ -1,218 +1,151 @@
-# HakiOS on the OnePlus 6T (`fajita`)
+<div align="center">
 
-**The Darwin (XNU) kernel and the iOS 16.5 user space, running on a OnePlus 6T (Snapdragon 845).**
-It boots to the home screen with the GPU, touch, Wi-Fi, **LTE data**, **sound from the speaker**, **the microphone**, Bluetooth
-(**BLE keyboards type**), charging, vibration and the flashlight working. Run from a Mac it lives in RAM; **installed, the
-phone starts iOS by itself** from its power button, behind a boot screen, with the right time and time zone and its data
-on a 20 GB volume of its own. Safari loads pages, and Wi-Fi joins a known network again by itself.
+# HakiOS for the OnePlus 6T
 
-**Current release: Beta 0.5 (`v0.5-beta`, November 2026)** — installed, the phone starts iOS by itself, with its data on
-a 20 GB volume of its own; see [the release notes](releases/v0.5-beta.md) and [testing Beta 0.5](#testing-beta-05).
+**iOS 16.5 on a OnePlus 6T** — the open-source Darwin (XNU) kernel and Apple's own user space,<br>
+booting on a Snapdragon 845 with its GPU, Wi‑Fi, LTE, sound and touch working.
 
-This is a device port of [HakiOS](https://github.com/oosexgang/hakios-xnu-kernel), which ports the open-source XNU kernel to
-Qualcomm phones. The upstream reference phone is the POCO X5 Pro (Snapdragon 778G). The 6T is a different SoC generation, so
-the GPU, modem, IPA, Wi-Fi, touch, battery, brightness, flash and haptic drivers had to be written or ported for it.
+[![Release](https://img.shields.io/github/v/release/kiwiiiii-eth/hakios-fajita?include_prereleases&label=release&color=0969da)](https://github.com/kiwiiiii-eth/hakios-fajita/releases/latest)
+![Device](https://img.shields.io/badge/device-OnePlus%206T%20(fajita)-555)
+![iOS](https://img.shields.io/badge/iOS-16.5%20(20F66)-555)
+[![License](https://img.shields.io/badge/license-MIT-555)](LICENSE)
 
-[繁體中文說明](README.zh-TW.md)
+[繁體中文](README.zh-TW.md) · [Release notes](releases/v0.5-beta.md) · [Changelog](CHANGELOG.md) · [Install guide](beta/README.md) · [Docs](#documentation)
 
-> **Not affiliated with Apple, OnePlus or Qualcomm.** No Apple software, no iOS image and no vendor firmware are in
-> this repository. You download the IPSW from Apple yourself and take the firmware from your own phone. Whether you may
-> use them this way is up to you (see upstream's [LEGAL.md](https://github.com/oosexgang/hakios-xnu-kernel/blob/main/LEGAL.md)).
-> Apple's services (activation, Apple ID, App Store) are not supported and are not a goal.
+<img src="docs/images/bootscreen-phones.png" width="620" alt="The HakiOS boot screen on a OnePlus 6T: the HakiOS name, a progress bar, and the boot's facts at the bottom; next to it the same screen with the loader's log">
 
-## What works
+</div>
 
-As seen on the phone in November 2026 (the full list is in [`device.conf`](device.conf)):
+## What it is
 
-| Area | 6T | Upstream reference (redwood) | Notes |
-|---|---|---|---|
-| Lock screen, home screen, stock apps | ✅ | ✅ | SpringBoard, Settings, Safari (pages load: Beta 0.3), Health … |
-| **Boots by itself (installed)** | ✅ | ✅ | `install.sh` (Beta 0.4): HakiOS in the boot partition of the slot Android does not use, the system image read from `darwin` behind a boot screen with a progress bar (Beta 0.5); Shut Down and Restart work; Android stays a `set_active` away |
-| Clock and time zone | ✅ | — | The PMIC's real-time clock with a kept offset; the time zone from the cellular network (NITZ) |
-| Touch, buttons | ✅ | ✅ | Synaptics S3706B (RMI4 over I2C), written for the 6T; read 120 times a second |
-| All 8 CPU cores, frequency scaling | ✅ | ✅ | SDM845 OSM tables, load governor |
-| GPU (OpenGL ES 3.2 via Mesa) | ✅ | ✅ | **Adreno 630 brought up from cold**, up to 60 fps |
-| Wi-Fi | ✅ | ✅ | WCN3990 + Linux ath10k; join from Settings, **5 GHz ≈ 95–110 Mbps**; a known network is joined again by itself (auto-join) |
-| Battery level | ✅ | ✅ | PMI8998 fuel gauge in the status bar |
-| **Charging under this kernel** | ✅ | ❌ | 41 % → 64 % in one session, 1 A from USB |
-| **Cellular: LTE registration and data** | ✅ | partial (no registration) | FarEasTone LTE, 4 bars, the carrier's name in the status bar; Safari over LTE, 88 MB down / 56 MB up with zero IPA errors (`ipa8=11`) |
-| **Flashlight** | ✅ | partial | From Control Center's button |
-| **Screen brightness** | ✅ | — | Settings and Control Center slider (DSI command mode) |
-| Temperature guard | ✅ | partial | 21 sensors, GPU and CPU scale down with load |
-| Vibration | ✅ | ✅ | PMI8998 LRA, on by default (stronger than an iPhone's; to be tuned) |
-| **Storage** | ✅ | ✅ | `/private/var` is a 20 GB journaled HFS Plus volume in the partition `darwin` cut from userdata (Beta 0.5): kept on the flash, Settings shows the space and iPhone Storage counts it |
-| Location | partial | — | The modem's GPS (QMI LOC) to Location Services (`gnss=1`): satellites tracked (23 in view indoors), Location Services turned on by itself, Safari's geolocation gets a position; Apple Maps needs an activated device |
-| **Sound (speaker)** | ✅ | ✅ | iOS sounds, keyboard clicks, YouTube: ADSP → I2S → TFA9894 amplifier (bypass); limited to −20 dBFS for the speaker's safety; on by default |
-| **Microphone** | ✅ | ✅ | Voice Memos records: the bottom microphone (AMIC4) → WCD9340 codec → SLIMbus → ADSP; powered only while something records |
-| Cameras | ❌ | ✅ | Not started |
-| Bluetooth | partial | ❌ | WCN3990 over UART: iOS turns Bluetooth on, scans and pairs with a Mac (`bt=4`); **BLE keyboards pair and type** (BTLEServer, HID over GATT); pairings are not kept across reboots |
-| SSH | ✅ | ✅ | `sshd` with your own key (`RC_JOBS=rc.jobs.ssh6t`); `neofetch` preinstalled and shown at login |
+A device port of [HakiOS](https://github.com/oosexgang/hakios-xnu-kernel), which runs the XNU kernel on Qualcomm phones,
+to the **OnePlus 6T**. The 6T's chip is a different generation from upstream's phone, so its GPU, modem, Wi‑Fi, touch,
+battery, audio and Bluetooth drivers were written or ported for it.
 
-## How it boots
+Install it and the phone **starts iOS from its power button**, with no computer, and keeps your data on the phone.
+Android stays installed in its other slot, one command away. Or boot it from a Mac without flashing anything at all.
 
-Two ways. **From a Mac** (`run.sh`, `scripts/run-darwin-live.sh`): nothing is flashed, the system image comes over USB,
-and a reboot brings the phone back to its own Android.
+> [!NOTE]
+> **Not affiliated with Apple, OnePlus or Qualcomm.** No Apple software and no vendor firmware are in this repository:
+> you download the iOS IPSW from Apple yourself and copy the firmware from your own phone. Apple's services (activation,
+> Apple ID, App Store) are not supported and are not a goal.
 
-```
-ABL (stock bootloader)  ── fastboot boot ──▶  U-Boot  ── hakios load ──▶  HakiOS loader (UEFI app)
-      ▲                                                                       │  stages the system image in RAM
-      └─ reboot reason set in the PMIC so every reset returns to fastboot      ▼
-                                                                    XNU 8796 ─▶ launchd ─▶ SpringBoard
-```
+## What you can do with it
 
-**Installed** (`beta/install.sh`, Beta 0.4 and 0.5): the power button starts it, with no Mac.
+- 📱 **Use iOS 16.5** on the 6T: lock screen, home screen, Settings, Safari, Notes, Voice Memos and the other built-in apps.
+- 🔌 **Turn it on like a phone**: the power button shows a boot screen for about 20 seconds, then iOS. No Mac, no cable.
+- 🌐 **Get online** over Wi‑Fi (5 GHz at about 100 Mbps; known networks are joined again by themselves) or **LTE** with a SIM.
+- 🔊 **Hear and record**: the speaker plays system sounds and YouTube; Voice Memos records from the microphone.
+- ⌨️ **Type on a Bluetooth keyboard** (BLE).
+- 💾 **Keep your data**: settings, Wi‑Fi networks and app data live on a 20 GB volume on the phone.
+- 🔁 **Go back to Android** at any time (`./switch.sh android`), or take HakiOS off completely (`./uninstall.sh`).
+- 🛠 **Develop on real hardware**: SSH into the phone, read its system log and the threads of any process.
 
-```
-power ─▶ ABL ─▶ boot_X: U-Boot ─▶ HakiOS loader ── the system image from darwin (17 s), a boot screen ──▶ XNU ─▶ launchd
-                (HakiOS's slot)       │  marks the slot successful, as Android does                  /private/var: HFS Plus in darwin
-                                      └─ no system image to read: back to ABL's fastboot
-```
+## Status
 
-**What is written to the phone.** From a Mac: one PMIC register (the reboot reason `0x88f`, so a reset lands in
-fastboot), and no partition. Installed, with your consent in `install.sh`, after a backup of everything it changes
-(`uninstall.sh` puts it back): LUN 0's partition table (userdata shortened, a partition `darwin` of its last 32 GiB by default, 20 to 64 with `GIB=`:
-**Android's data is erased**; only those two entries may change, checked by the loader against both copies and read
-back), `darwin` itself (the system image, the data volume), the boot partition of HakiOS's slot with that slot's dtbo
-and vbmeta taken from Android's, and that slot's A/B attributes (marked successful). Either way, while the system runs:
-the charger's input and current limits, the flash LED and the haptic block, each limited to a register allow-list and
-read back after every write. `persist`, `modemst*`, `fsg`, `xbl`, `abl` and `tz` are never touched. The modem's file
-system is served read-only from a copy in RAM. With `ipa8=11`, two of the modem's data settings (data switch on,
-default data SIM) are changed in the modem's memory only, not in its partitions.
+As seen on the phone in November 2026 (Beta 0.5). ✅ works · 🟡 partly · ❌ not yet.
+The drivers behind each line, and how the 6T compares with upstream's phone: [Hardware support](docs/hardware.md).
 
-## The hard parts
+| | Feature | Status | Notes |
+|---|---|:---:|---|
+| **System** | Boot to the home screen | ✅ | SpringBoard and the built-in apps |
+| | Start from the power button | ✅ | Installed with `./install.sh`; Android kept in its own slot |
+| | Shut down, restart | ✅ | A restart from iOS takes under a minute |
+| | Storage | ✅ | A 20 GB volume; Settings and iPhone Storage show it |
+| | Clock and time zone | ✅ | Kept while the phone is off; the time zone from the cellular network |
+| **Display & input** | Touch, buttons | ✅ | Read 120 times a second |
+| | GPU | ✅ | Adreno 630, OpenGL ES 3.2 (Mesa), up to 60 fps |
+| | Brightness | ✅ | Settings and Control Center |
+| | Smooth scrolling | 🟡 | 55–60 fps, about one frame in ten late |
+| **Connectivity** | Wi‑Fi | ✅ | WPA2; 5 GHz at about 100 Mbps; known networks rejoined |
+| | LTE data | ✅ | Tested on FarEasTone (Taiwan) |
+| | Phone calls, SMS | ❌ | Data only for now |
+| | Bluetooth | 🟡 | Pairs; BLE keyboards type; pairings are forgotten at every boot |
+| | Location (GPS) | 🟡 | Experimental (`gnss=1`): satellites tracked, Safari gets a position |
+| | USB to a computer | ❌ | Only the boot loader's fastboot |
+| **Audio** | Speaker | ✅ | Capped at −20 dBFS to protect it |
+| | Microphone | ✅ | Voice Memos records |
+| **Power & hardware** | Battery level, charging | ✅ | Charges at 1 A from USB |
+| | Vibration, flashlight | ✅ | |
+| | Temperature guard | ✅ | 21 sensors; the CPU and GPU slow down when hot |
+| | Cameras | ❌ | Not started |
+| | Fingerprint, motion and light sensors | ❌ | Not started |
+| **Apple services** | App Store, Apple ID, iCloud, Apple Maps | ❌ | Need an activated device; not a goal |
 
-The bugs that took the longest, written down for the next SDM845 port:
+## Get started
 
-| Problem | Cause | Fix |
-|---|---|---|
-| The kernel stopped right after the framebuffer came up | XNU hard-codes the EL1 virtual timer as interrupt 27; on SDM845 it is **19** | `gic_vtimer=` boot argument (`CONFIG_GIC_VTIMER=19` in `soc/configs/sdm845.config`) |
-| Touch only worked with the USB cable unplugged | USB noise; the controller has a "charger connected" bit (F01 ctrl0 bit 5) | The driver reads USBIN from the PMIC every 0.5 s and sets the bit |
-| GMU powered the GPU but never set the PLL | The A630's GMU firmware wants chip ID **0x06030200** (630.2), not the device tree's 0x06030000; RSCC/PDC must be programmed *before* the GMU starts | Both fixed; then DCVS votes, without which every GPU wait took 70–185 ms |
-| The phone crashed to Qualcomm CrashDump 0.4 s after the modem's MBA got its header | Read the TrustZone diag log out of a CrashDump with EDL: a **NoC error** at `QDSP6SS_SLEEP`. Our own debug read touched QDSP6SS after the MBA had locked it with an XPU | No QDSP6SS access after the header is handed over (Linux never reads it either) |
-| Modem up, but no Wi-Fi firmware service | The modem asserted when we pre-allocated the IPA SMEM item or mentioned IPA at all | GLINK SMEM items 478/479 allocated as Linux does, IPA left out entirely |
-| Wi-Fi WMI timeouts, now and then | A NAPI poll racing the interrupt: a schedule arriving mid-poll was dropped and that copy engine's interrupt stayed masked | Linux's "missed" semantics in our NAPI |
-| Joined, WPA2 done, but stuck at 169.254 | The `lx_transmit` entry point was still a placeholder returning `ENETDOWN` | Wired to the station's send path; DHCP, Safari |
-| Battery drained while plugged in | ABL leaves the input limit at 500 mA and the charge current at **0** | Set both to 1 A (with read-back and a 45 °C cut-off) |
-| Wi-Fi died about 2 minutes after LTE registered | The modem asserted in its LTE downlink (`ipa_dl_opt_lte.c: IPA Assert new_free_space > 0`): with no IPA set up it had nowhere to put packets, and the Wi-Fi firmware runs on the modem | Bring up the IPA; until it is, the modem stays offline by default |
-| QCOM CrashDump right after TrustZone started the IPA firmware | The IPA init we started from writes **IPA v4.11** register offsets; the SDM845 has **v3.5.1**, the writes land elsewhere and hang the bus. Before that, TrustZone refused a `.mdt` that kept the mbn's padding between the program headers and the hash segment | v3.5.1 layouts throughout; a tight `.mdt`; Linux's bus votes before the authentication |
-| Registered on LTE, but every data call refused with "no service" | Left in the modem from Android: the data switch **off** and the default data SIM on **slot 2** | Two DSD writes (with consent, in the modem's memory only); the SIM provisioned as postmarketOS does it, without a slot switch |
-| Safari's pages spun for ever, though the network worked | `mobileactivationd` traps at every start on this phone and never answers what is queued for it; `apsd` asks it while starting, `amsaccountsd` asks `apsd`, and Safari's main thread waited on AppleMediaServices (found with a stackshot of Safari's threads) | The daemon is left out (`mkjobs.py` DENY); everything that asks it gets its error at once |
-| A known Wi-Fi network was never joined again by itself | wifid reads the auto-join RSSI floor once from the driver (`APPLE80211_IOC_RSSI_BOUNDS`); refused, the floor stayed **0 dBm** and every network was "Below minimum RSSI threshold" — found by disassembling `wifid` | The driver answers it (-90 / -20 dBm, floor -80); and a power-on asked for before the radio is up is taken, not refused |
-| Settings said the phone held 1 GB | `/private/var` was a memory filesystem (a quarter of the RAM), packed into `darwin` as the system shut down | An HFS Plus volume in `darwin` past the packed store's slots; the store moved into it once, and only when it comes back whole |
-| iPhone Storage stayed empty | It counts the root's space, and the root is the read-only system image (2.6 GB, nothing free) | The root reports the data volume's space (`vfs_getattr`), as an iPhone's root shares its container's |
-| The clock went back hours after a forced restart | The PMIC's real-time clock started counting from zero again after the phone was got out of a stuck loader, and the kept offset then pointed hours back | The offset is kept with its count; a count that went back, or a clock that would, leaves the time as the image has it |
-| The carrier's name showed as four boxes | iOS draws it in PingFang's Medium weight, which the trimmed system font had dropped | Medium kept |
-
-## Repositories
-
-| Repository | What |
-|---|---|
-| **this one** (`hakios-fajita`) | The device: configs, SoC layer (`soc/`, sdm845), U-Boot board files and patch, scripts, status |
-| [`kiwiiiii-eth/hakios-xnu-kernel`](https://github.com/kiwiiiii-eth/hakios-xnu-kernel/tree/fajita), branch **`fajita`** | The kernel and every new driver: `drivers/gpu/hakios.a630.c`, `hakios.dsibl.c`, `drivers/modem/hakios.mpss845.c`, `drivers/wifi/hakios.wifi10.c` + `wifi/lx/src10/`, `drivers/modem/hakios.ipa.c` (IPA 3.5.1), `drivers/input/hakios.rmi4.c`, `drivers/power/hakios.fg8998.c`, `drivers/camera/hakios.torch8998.c`, `drivers/haptic/hakios.haptic8998.c`, `drivers/audio/hakios.adsp845.c`, `drivers/bluetooth/hakios.bt3990.c`; the loader's partition-table rules and boot screen (`xnuloader/gpt.c`, `bootscreen.c`) |
-| [`oosexgang/hakios-xnu-kernel`](https://github.com/oosexgang/hakios-xnu-kernel) | Upstream HakiOS: the XNU port, loader, user space, tools, docs |
-| [`oosexgang/hakios-uefi`](https://github.com/oosexgang/hakios-uefi/tree/mac), branch `mac` | HakiOS's U-Boot patch (`u-boot/`) this port's U-Boot is built with |
-
-## Building and running
-
-This is still a developer bring-up. You need a OnePlus 6T with an **unlocked bootloader**, a Mac (Apple
-silicon; the kernel builds with Xcode), and upstream's [Building from source](https://github.com/oosexgang/hakios-xnu-kernel/blob/main/docs/getting-started/building.md)
-for the general steps. What is specific to the 6T:
-
-```sh
-mkdir hakios && cd hakios
-git clone -b fajita https://github.com/kiwiiiii-eth/hakios-xnu-kernel
-git clone https://github.com/kiwiiiii-eth/hakios-fajita
-ln -s ../../hakios-fajita hakios-xnu-kernel/devices/fajita
-export PATH=$PWD/hakios-fajita/hostbin:$PATH      # macOS stand-ins for lld-link, llvm-ar, GNU sha256sum, bison, 7z
-
-cd hakios-xnu-kernel
-make fajita_defconfig && PYTHONSAFEPATH=1 make kernel   # the kernel with the 6T's drivers (see the note below)
-xnuloader/mkidentity.sh && xnuloader/build.sh      # the loader
-sysimage/unpack.sh ~/iPhone10,3,iPhone10,6_16.5_20F66_Restore.ipsw   # YOUR IPSW, downloaded from Apple
-tools/mk-mesa.sh && tools/mk-ath11k.sh fetch && tools/mk-ath10k.sh  # Mesa (GPU), Linux's ath10k (Wi-Fi)
-GL=1 REST=1 MODEM=1 SYSTEM=1 userland/build.sh     # root.apfs and system.apfs, with Mesa and the Wi-Fi firmware
-cd ..
-
-hakios-fajita/scripts/mk-usbimg.sh                 # U-Boot + loader, packed for ABL: out/hakios-fajita-usb.img
-hakios-fajita/scripts/run-darwin-live.sh           # phone in fastboot: boot, stage the system, run, fetch the log
-WORK=$PWD hakios-fajita/beta/install.sh            # or install it (ERASES ANDROID'S DATA: see beta/README.md)
-```
-
-`PYTHONSAFEPATH=1`: with Homebrew's Python 3.15, XNU's own `tools/lldbmacros/core/collections.py` shadows the standard
-library while the build checks the lldb macros, and a first build fails; this keeps the script's directory off `sys.path`.
-The first `make kernel` also fetches Apple's XNU source and the SDKs (a few minutes); later ones take about a minute.
-
-`run-darwin-live.sh` takes the phone from any state (U-Boot, loader, ABL) back to ABL fastboot, boots the loader, sends the
-2.4 GB system image over USB (about a minute), starts the kernel and copies the log to `out/logs/` while it runs. Extra boot
-arguments go in the third parameter. Set `ABL_SERIAL` if more than one device is in fastboot. The script comments are in
-Traditional Chinese.
-
-### Firmware
-
-Never committed. It goes into `hakios-xnu-kernel/fw-gpu/` and `fw-modem/`, which git ignores:
-
-| For | Files | From |
-|---|---|---|
-| GPU | `a630_gmu.bin`, `a630_sqe.fw` | linux-firmware (`qcom/`) |
-| GPU | `a630_zap.mdt` + `.bXX` | your phone (signed for its TrustZone) |
-| Modem | `mba.mbn`, `modem.mdt` + `.bXX` | your phone's `modem_a` partition |
-| Modem, Wi-Fi | the whole `image/` directory (`wlanmdsp.mbn`, `bdwlan.*`, `*.jsn`) → `fw-modem/image/` | your phone (`/vendor/firmware_mnt/image`) |
-| Wi-Fi | `ath10k/WCN3990/hw1.0/firmware-5.bin`, `board-2.bin` → `fw-modem/ath10k/` | linux-firmware |
-
-### U-Boot
-
-`prebuilt/u-boot.bin` is U-Boot (GPL-2.0+). Its corresponding source is U-Boot **v2026.07**, plus HakiOS's patch and files
-from [`oosexgang/hakios-uefi@1c65228`](https://github.com/oosexgang/hakios-uefi/tree/1c6522893266157506c767e2ca427053ed3634a8/u-boot),
-plus this repository's `u-boot/files/` and `u-boot/patches/sdm845-carveout.patch`. `scripts/fetch-uboot.sh` and
-`scripts/build-uboot-vm.sh` rebuild it in a Linux VM (`aarch64-linux-gnu-`). `prebuilt/u-boot-install.bin` is the same
-U-Boot built with `hakios_fajita_install_defconfig` (the installed environment: nothing of its own on the screen, the
-reboot reason cleared before the loader, ABL's fastboot if the loader comes back).
-
-## Testing Beta 0.5
-
-The easy way is the **test kit** on the [Beta 0.5 release](https://github.com/kiwiiiii-eth/hakios-fajita/releases/tag/v0.5-beta):
-the kernel, the loader and our programs prebuilt, so no Xcode is needed. You bring a OnePlus 6T with an unlocked bootloader
-(`run.sh` flashes nothing: Android stays; `install.sh` erases Android's data, see the kit's README), a Mac (Apple silicon; Intel should work, untried) with [Homebrew](https://brew.sh), and Apple's iOS 16.5 IPSW for iPhone X (20F66):
+You need a **OnePlus 6T** (fajita) with an **unlocked bootloader**, a **Mac** with [Homebrew](https://brew.sh), Apple's
+**iOS 16.5 IPSW for iPhone X** (build 20F66, which you download yourself) and about 15 GB of free disk.
+Download `hakios-6t-v0.5-beta.tar.gz` from the [latest release](https://github.com/kiwiiiii-eth/hakios-fajita/releases/latest), then:
 
 ```sh
 brew install python sevenzip zstd coreutils android-platform-tools
 tar xzf hakios-6t-v0.5-beta.tar.gz && cd hakios-6t-v0.5-beta
-./setup.sh ~/Downloads/iPhone10,3,iPhone10,6_16.5_20F66_Restore.ipsw   # once: firmware from your phone over adb, your IPSW, the images
-./run.sh                                                               # a run from the Mac, an hour, nothing flashed
-./install.sh                                                           # or onto the phone: it starts iOS by itself (erases Android's data)
+./setup.sh ~/Downloads/iPhone10,3,iPhone10,6_16.5_20F66_Restore.ipsw   # once: your phone's firmware, your IPSW
+./run.sh        # try it from the Mac: nothing is flashed, a reboot is Android again
+./install.sh    # or install it: the phone then starts iOS by itself
 ```
 
-What it does, step by step, and what to try once the lock screen is up: the kit's [README](beta/README.md). The loader
-in the kit carries no device identity; `setup.sh` writes the one from your own IPSW into it (`xnuloader/mkidentity.py --fill`).
-To build everything from source instead, follow "Building and running" with `BT=1 GL=1 REST=1 MODEM=1 SYSTEM=1
-RC=rc.launchd.aks RC_JOBS=rc.jobs.ssh6t userland/build.sh`, your own SSH keys in `hakios-xnu-kernel/ssh/` and
-`make firmware` (this repository's `pull-firmware.sh`).
+> [!WARNING]
+> **`./install.sh` erases Android's data** (apps, photos, accounts) to make room for iOS. It backs up everything it
+> changes first and asks you to type `ERASE`; `./uninstall.sh` puts the phone back. Android itself stays installed.
 
-The log of each run is written to `out/logs/` while it runs; attach it to an issue when something goes wrong.
+The [install guide](beta/README.md) explains every step and what to try once the lock screen is up.
+
+## How it works
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/boot-flow-dark.png">
+  <img src="docs/images/boot-flow-light.png" alt="Boot flow. Installed: power on, the phone's bootloader, U-Boot, the HakiOS loader reading iOS from the flash, the XNU kernel, launchd, SpringBoard. From a Mac: fastboot boot, U-Boot, the loader with the system image over USB, XNU, launchd, SpringBoard.">
+</picture>
+
+The phone's own bootloader starts **U-Boot**, which starts the **HakiOS loader**. The loader reads the iOS system image
+(from the phone's flash when installed, over USB from a Mac otherwise), describes the hardware to the kernel and starts
+**XNU** with the 6T's drivers. From there on it is iOS's own `launchd`, daemons and SpringBoard.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/storage-dark.png">
+  <img src="docs/images/storage-light.png" alt="Storage layout. The flash: other partitions, userdata shortened, and a new partition darwin of 32 GiB at its end. Inside darwin: the iOS system image (first 8 GiB), Beta 0.4's store (a fallback, to 12 GiB), and the data volume for /private/var (about 20 GB).">
+</picture>
+
+Installing shortens Android's `userdata` and adds one partition, `darwin`, at its end: the read-only iOS system image
+and the data volume iOS writes to. Nothing else on the phone changes. More in [How it boots](docs/how-it-boots.md).
+
+## Documentation
+
+| | |
+|---|---|
+| [How it boots](docs/how-it-boots.md) | The two ways to boot, the storage layout, and exactly what is written to the phone |
+| [Hardware support](docs/hardware.md) | Every part of the phone, its driver, and how the 6T compares with upstream's phone |
+| [The hard parts](docs/hard-parts.md) | The bugs that took longest, written down for the next Snapdragon 845 port |
+| [Building from source](docs/building.md) | The repositories, the build, the firmware and U-Boot |
+| [Install guide](beta/README.md) | The test kit: setup, run, install, update, uninstall, what to try |
+| [Changelog](CHANGELOG.md) | What changed in each release |
 
 ## Contact and support
 
-- Issues and reports: https://github.com/kiwiiiii-eth/hakios-fajita/issues
+- Issues and reports: [GitHub issues](https://github.com/kiwiiiii-eth/hakios-fajita/issues), with the log (the install
+  guide says where it is), what you did and what you saw.
 - X: [@0x718_718](https://x.com/0x718_718)
 - Donations (BTC): `bc1p6n329lsup5kpyemsvhqen70h0a4nc2ujyxflza5tfw6a4j8r4afq47gf58`
 
 ## Credits
 
 - **[HakiOS](https://github.com/oosexgang/hakios-xnu-kernel)** (oosexgang and contributors): the XNU port, the loader,
-  the user space and tooling this port stands on, and the redwood drivers the 6T's were modelled on.
+  the user space and tooling this port stands on, and the drivers the 6T's were modelled on.
 - **[ios-fajita](https://github.com/edi194/ios-fajita)** by edi194, built on [ios-sweet](https://github.com/dipa-studio/ios-sweet):
-  the first iOS on this phone (software rendering, October 2026); its boot image parameters and the touch controller's
-  measured init sequence. This port started as [a fork of it](https://github.com/kiwiiiii-eth/ios-fajita) and moved to HakiOS
-  when reading the UFS stalled.
-- **[postmarketOS](https://postmarketos.org) and mainline Linux** for SDM845: the control experiment that showed the modem
-  boots with the same firmware, and the reference for every rewrite (`a6xx_gmu`, `qcom_q6v5_mss`, `rmi4`, `qcom-fg`, …).
+  the first iOS on this phone (software rendering, October 2026), its boot image parameters and the touch controller's
+  init sequence. This port started as [a fork of it](https://github.com/kiwiiiii-eth/ios-fajita).
+- **[postmarketOS](https://postmarketos.org) and mainline Linux** for SDM845: the reference for every rewritten driver;
   ath10k (ISC) is compiled unchanged on LinuxKPI.
-- [LineageOS](https://github.com/LineageOS/android_kernel_oneplus_sdm845) OnePlus SDM845 kernel, [Mesa](https://mesa3d.org)
-  freedreno, [U-Boot](https://u-boot.org), [bkerler/edl](https://github.com/bkerler/edl).
+- [LineageOS](https://github.com/LineageOS/android_kernel_oneplus_sdm845), [Mesa](https://mesa3d.org) freedreno,
+  [U-Boot](https://u-boot.org), [bkerler/edl](https://github.com/bkerler/edl); the boot screen is lettered in
+  [Inter](https://rsms.me/inter/) and [JetBrains Mono](https://www.jetbrains.com/lp/mono/).
 
 ## License
 
-Our own files here (configs, scripts, docs, `hostbin/`) are MIT ([LICENSE](LICENSE)). `u-boot/`, `prebuilt/u-boot.bin` and
-`prebuilt/u-boot-install.bin` are GPL-2.0+ (U-Boot), the device tree source GPL-2.0, `prebuilt/mkbootimg.py` Apache-2.0
-(AOSP). The kernel drivers live in `hakios-xnu-kernel` under its terms (XNU-derived code APSL 2.0, the rest MIT); the boot
-screen's pictures there are drawn from Inter and JetBrains Mono (SIL Open Font License 1.1).
+This repository's own files (configs, scripts, docs, `hostbin/`) are MIT ([LICENSE](LICENSE)). `u-boot/`,
+`prebuilt/u-boot.bin` and `prebuilt/u-boot-install.bin` are GPL-2.0+ (U-Boot), the device tree source GPL-2.0,
+`prebuilt/mkbootimg.py` Apache-2.0 (AOSP). The kernel and drivers live in
+[`hakios-xnu-kernel`](https://github.com/kiwiiiii-eth/hakios-xnu-kernel/tree/fajita) under its terms (XNU-derived code
+APSL 2.0, the rest MIT); the boot screen's lettering is drawn from Inter and JetBrains Mono (SIL Open Font License 1.1).

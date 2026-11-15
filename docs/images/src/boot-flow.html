@@ -1,0 +1,40 @@
+<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="common.css"><script src="theme.js"></script>
+<style>
+.card { width: 1200px; }
+.who small { max-width: 140px; }
+.lane { display: grid; grid-template-columns: 150px repeat(6, 1fr); align-items: stretch; column-gap: 26px; }
+.lane + .lane { margin-top: 26px; padding-top: 26px; border-top: 1px dashed var(--line); }
+.who { align-self: center; }
+.who b { display: block; font-size: 16px; font-weight: 650; }
+.who small { display: block; font-size: 12.5px; color: var(--muted); margin-top: 3px; line-height: 1.35; }
+.node { position: relative; border-radius: 12px; border: 1.5px solid; padding: 11px 12px 12px; min-height: 92px; }
+.node b { display: block; font-size: 14.5px; font-weight: 650; letter-spacing: -0.1px; }
+.node small { display: block; font-size: 12px; line-height: 1.38; margin-top: 4px; opacity: .85; }
+.node:not(:last-child)::after { content: ""; position: absolute; right: -22px; top: 50%; width: 16px; height: 2px; background: var(--arrow); }
+.node:not(:last-child)::before { content: ""; position: absolute; right: -24px; top: calc(50% - 4px); border: 5px solid transparent; border-left: 6px solid var(--arrow); border-right: 0; }
+.stock { background: var(--stock-bg); border-color: var(--stock-bd); color: var(--stock-tx); }
+.haki { background: var(--haki-bg); border-color: var(--haki-bd); color: var(--haki-tx); }
+.ios { background: var(--ios-bg); border-color: var(--ios-bd); color: var(--ios-tx); }
+.time { position: absolute; right: 10px; top: 10px; font-size: 11px; font-weight: 600; opacity: .8; }
+</style>
+<div class="card">
+  <div class="lane">
+    <div class="who"><b>Installed</b><small>power button, no Mac, no cable</small></div>
+    <div class="node stock"><b>Power on</b><small>the phone's own bootloader (ABL)</small></div>
+    <div class="node haki"><b>U-Boot</b><small>from the boot partition of HakiOS's slot</small></div>
+    <div class="node haki"><b>HakiOS loader</b><small>boot screen; reads iOS from the flash (17 s)</small></div>
+    <div class="node haki"><b>XNU kernel</b><small>Darwin 22 with the 6T's own drivers</small></div>
+    <div class="node ios"><b>launchd</b><small>iOS 16.5's daemons; data kept on the phone</small></div>
+    <div class="node ios"><b>SpringBoard</b><small>lock screen, home screen, the apps</small></div>
+  </div>
+  <div class="lane">
+    <div class="who"><b>From a Mac</b><small>over USB, nothing flashed, all in RAM</small></div>
+    <div class="node stock"><b>fastboot boot</b><small>ABL starts what the Mac sends</small></div>
+    <div class="node haki"><b>U-Boot</b><small>the same U-Boot, from RAM</small></div>
+    <div class="node haki"><b>HakiOS loader</b><small>the system image comes over USB</small></div>
+    <div class="node haki"><b>XNU kernel</b><small>its log copied to the Mac</small></div>
+    <div class="node ios"><b>launchd</b><small>nothing kept; a reboot is Android</small></div>
+    <div class="node ios"><b>SpringBoard</b><small>the same iOS, for an hour</small></div>
+  </div>
+  <div class="legend"><span class="k-stock">the phone's own</span><span class="k-haki">HakiOS (this port and upstream)</span><span class="k-ios">iOS 16.5 user space (from your IPSW)</span></div>
+</div>

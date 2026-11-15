@@ -1,0 +1,27 @@
+@font-face { font-family: Inter; src: url(fonts/inter.ttf); font-weight: 100 900; }
+@font-face { font-family: Mono; src: url(fonts/mono.ttf); font-weight: 100 800; }
+:root {
+  --bg: #ffffff; --line: #d1d9e0; --text: #1f2328; --muted: #59636e; --arrow: #8c959f;
+  --stock-bg: #f6f8fa; --stock-bd: #d1d9e0; --stock-tx: #1f2328;
+  --haki-bg: #ddf4ff; --haki-bd: #54aeff; --haki-tx: #0550ae;
+  --ios-bg: #dafbe1;  --ios-bd: #4ac26b;  --ios-tx: #116329;
+  --old-bg: #fff8c5;  --old-bd: #d4a72c;  --old-tx: #7d4e00;
+}
+html.dark {
+  --bg: #0d1117; --line: #30363d; --text: #e6edf3; --muted: #9198a1; --arrow: #656c76;
+  --stock-bg: #151b23; --stock-bd: #3d444d; --stock-tx: #e6edf3;
+  --haki-bg: #0c2d6b80; --haki-bd: #1f6feb; --haki-tx: #79c0ff;
+  --ios-bg: #03311580; --ios-bd: #238636;  --ios-tx: #56d364;
+  --old-bg: #4b290080; --old-bd: #9e6a03;  --old-tx: #e3b341;
+}
+* { box-sizing: border-box; margin: 0; }
+html, body { background: transparent; }
+body { font-family: Inter; color: var(--text); -webkit-font-smoothing: antialiased; font-feature-settings: "cv11", "ss01"; }
+.card { background: var(--bg); border: 1px solid var(--line); border-radius: 16px; padding: 28px 32px; }
+.mono { font-family: Mono; }
+.legend { display: flex; gap: 22px; font-size: 13px; color: var(--muted); margin-top: 22px; }
+.legend span::before { content: ""; display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 7px; vertical-align: -1px; }
+.legend .k-stock::before { background: var(--stock-bg); border: 1.5px solid var(--stock-bd); }
+.legend .k-haki::before { background: var(--haki-bg); border: 1.5px solid var(--haki-bd); }
+.legend .k-ios::before { background: var(--ios-bg); border: 1.5px solid var(--ios-bd); }
+.legend .k-old::before { background: var(--old-bg); border: 1.5px solid var(--old-bd); }

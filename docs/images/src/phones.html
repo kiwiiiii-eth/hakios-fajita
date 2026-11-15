@@ -1,0 +1,24 @@
+<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="common.css"><script src="theme.js"></script>
+<style>
+body { padding: 30px 40px 26px; }
+.row { display: flex; gap: 70px; justify-content: center; }
+.phone { position: relative; width: 300px; padding: 9px; border-radius: 46px;
+  background: linear-gradient(150deg, #5a5d63 0%, #2a2b2e 22%, #111214 60%, #3b3d42 100%);
+  box-shadow: 0 0 0 1px #00000060, 0 24px 50px -18px #00000080, inset 0 0 0 1px #ffffff22; }
+.phone::before, .phone::after { content: ""; position: absolute; width: 3px; border-radius: 2px; background: #3a3c40; }
+.phone::before { right: -3px; top: 150px; height: 56px; }
+.phone::after { left: -3px; top: 120px; height: 90px; }
+.screen { position: relative; border-radius: 38px; overflow: hidden; background: #000; aspect-ratio: 1080 / 2340; }
+.screen img { width: 100%; height: 100%; display: block; }
+.cam { position: absolute; left: 50%; top: 9px; width: 11px; height: 11px; margin-left: -5.5px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #2c3a55 0 20%, #0b0d12 45%); box-shadow: 0 0 0 1.5px #16181c; }
+.cap { text-align: center; margin-top: 16px; font-size: 14px; color: #8b949e; }
+.cap b { color: #8b949e; font-weight: 650; }
+.cap code { font-family: Mono; font-size: 12.5px; }
+</style>
+<div class="row">
+  <div><div class="phone"><div class="screen"><img src="bootscreen.png"><div class="cam"></div></div></div>
+    <div class="cap"><b>Boot screen</b> · while the system image is read</div></div>
+  <div><div class="phone"><div class="screen"><img src="bootscreen-log.png"><div class="cam"></div></div></div>
+    <div class="cap"><b>With <code>DEBUG=1</code></b> · the loader's own log</div></div>
+</div>
