@@ -107,7 +107,7 @@ ABL（原廠 bootloader）── fastboot boot ──▶ U-Boot ── hakios lo
 brew install python sevenzip zstd coreutils android-platform-tools
 tar xzf hakios-6t-v0.3-beta.tar.gz && cd hakios-6t-v0.3-beta
 ./setup.sh ~/Downloads/iPhone10,3,iPhone10,6_16.5_20F66_Restore.ipsw   # 只跑一次：用 adb 從手機抽韌體、解 IPSW、組映像
-./run.sh                                                               # 每次開機：跑一輪 15 分鐘
+./run.sh                                                               # 每次開機：跑一輪 60 分鐘
 ```
 
 - 每一步在做什麼、進主畫面後可以測什麼，見測試包的 [README](beta/README.md)。

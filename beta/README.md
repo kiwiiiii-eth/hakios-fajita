@@ -17,7 +17,7 @@ Release notes: https://github.com/kiwiiiii-eth/hakios-fajita/blob/main/releases/
 
 ```sh
 ./setup.sh ~/Downloads/iPhone10,3,iPhone10,6_16.5_20F66_Restore.ipsw   # once, 15–25 minutes
-./run.sh                                                               # every boot, 15 minutes each
+./run.sh                                                               # every boot, an hour each (SECS=… for another length)
 ```
 
 `setup.sh` asks for the phone once, in Android with USB debugging on, to copy its firmware. `run.sh` takes the phone
@@ -64,7 +64,7 @@ Darwin（XNU）核心＋iOS 16.5 使用者空間跑在 OnePlus 6T 上。由 Mac 
 
 **兩個指令**：
 - `./setup.sh <IPSW 路徑>`：只跑一次，15～25 分鐘。中途會請你把手機開在 Android、開啟 USB 偵錯，用來抽韌體。
-- `./run.sh`：每次開機都跑，一輪 15 分鐘，約 4 分鐘後出現鎖定畫面。
+- `./run.sh`：每次開機都跑，一輪 60 分鐘（`SECS=秒數` 可改），約 4 分鐘後出現鎖定畫面；時間到 iOS 會停下，手機自動回到 fastboot 畫面。
 
 **可以測**：
 - **Wi‑Fi 與 SSH**：每次開機都要在「設定 → Wi‑Fi」重新加入網路。接著從 Mac 執行 `ssh -i work/hakios-xnu-kernel/ssh/client_ed25519 root@<手機 IP>`，會看到 neofetch；連不到就讓兩台都連 iPhone 熱點。

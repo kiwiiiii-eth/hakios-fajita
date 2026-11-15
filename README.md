@@ -154,7 +154,7 @@ the kernel, the loader and our programs prebuilt, so no Xcode is needed. You bri
 brew install python sevenzip zstd coreutils android-platform-tools
 tar xzf hakios-6t-v0.3-beta.tar.gz && cd hakios-6t-v0.3-beta
 ./setup.sh ~/Downloads/iPhone10,3,iPhone10,6_16.5_20F66_Restore.ipsw   # once: firmware from your phone over adb, your IPSW, the images
-./run.sh                                                               # every boot: a 15-minute run
+./run.sh                                                               # every boot: an hour's run
 ```
 
 What it does, step by step, and what to try once the lock screen is up: the kit's [README](beta/README.md). The loader
