@@ -41,6 +41,13 @@ Android stays installed in its other slot, one command away. Or boot it from a M
 - 🔁 **Go back to Android** at any time (`./switch.sh android`), or take HakiOS off completely (`./uninstall.sh`).
 - 🛠 **Develop on real hardware**: SSH into the phone, read its system log and the threads of any process.
 
+## On the phone
+
+Real photos of Beta 0.5, installed on a OnePlus 6T.
+
+<img src="docs/xda/04-gallery-a.png" alt="Real photos: the boot screen; the iOS 16.5 home screen on the OnePlus 6T; Settings, About, showing 21 GB capacity and 20.71 GB available">
+<img src="docs/xda/04-gallery-b.png" alt="Real photos: 110 Mbps on fast.com in Safari over Wi-Fi; Bluetooth pairing with a Mac, 4G in the status bar; Google Maps in Safari with a position from the modem's GPS">
+
 ## Status
 
 As seen on the phone in November 2026 (Beta 0.5). ✅ works · 🟡 partly · ❌ not yet.

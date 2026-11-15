@@ -39,6 +39,13 @@
 - 🔁 **隨時切回 Android**（`./switch.sh android`），或完整移除 HakiOS（`./uninstall.sh`）。
 - 🛠 **在真機上開發**：SSH 進手機，讀系統記錄、看任何程序的執行緒。
 
+## 實機照片
+
+Beta 0.5 安裝在 OnePlus 6T 上的實拍。
+
+<img src="docs/xda/04-gallery-a.png" alt="實機照片：開機畫面；OnePlus 6T 上的 iOS 16.5 主畫面；設定的關於本機顯示容量 21 GB、可用 20.71 GB">
+<img src="docs/xda/04-gallery-b.png" alt="實機照片：Safari 開 fast.com 測得 Wi-Fi 110 Mbps；藍牙與 Mac 配對、狀態列顯示 4G；Safari 的 Google 地圖以數據機 GPS 定位">
+
 ## 功能狀態
 
 2026 年 11 月在實機上確認的結果（Beta 0.5）。✅ 可用・🟡 部分可用・❌ 還不能用。
