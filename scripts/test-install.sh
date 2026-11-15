@@ -19,6 +19,8 @@ cp "$SAVED/gpt-head.orig.bin" "$FAKE/head.bin"; cp "$SAVED/gpt-tail.orig.bin" "$
 for p in boot_a boot_b; do printf 'ANDROID! the stock boot image of slot %s\n' "${p#boot_}" > "$FAKE/parts/$p.img"; done
 printf 'dtbo of slot a (Android)\n' > "$FAKE/parts/dtbo_a.img"; printf 'dtbo of slot b (stale)\n' > "$FAKE/parts/dtbo_b.img"
 printf 'vbmeta\n' > "$FAKE/parts/vbmeta_a.img"; cp "$FAKE/parts/vbmeta_a.img" "$FAKE/parts/vbmeta_b.img"
+# partitions are whole: each file padded to 64 KB, as readpart gives a whole partition
+for f in "$FAKE"/parts/*.img; do python3 -c "import sys; p=sys.argv[1]; b=open(p,'rb').read(); open(p,'wb').write(b+bytes(65536-len(b)))" "$f"; done
 cp -R "$FAKE/parts" "$T/parts.orig"
 python3 - <<EOF
 import json; json.dump({'mode': 'abl', 'slot': 'a', 'abl_userdata': [1601344, 30437370], 'gpt_written': False,
@@ -35,7 +37,8 @@ cp "$KREPO/tools/gpt-plan.py" "$W/hakios-xnu-kernel/tools/"
 : > "$W/out/hakios-fajita-usb.img"
 cat > "$W/hakios-fajita/scripts/mk-installimg.sh" <<'EOF'
 #!/bin/bash
-printf 'HakiOS U-Boot on the OnePlus 6T (fajita), INSTALLED: the install image\n' > "$HAKIOS_ROOT/out/hakios-fajita-install.img"
+# as the real one lies in a boot partition: U-Boot gzipped (no readable marker), the HKUB container, the XNUP payload
+printf 'ANDROID!\x1f\x8b(gzipped U-Boot) HKUB XNUP rdsrc=darwin epoch=%s\n' "$(date +%s%N)" > "$HAKIOS_ROOT/out/hakios-fajita-install.img"
 EOF
 chmod +x "$W/hakios-fajita/scripts/mk-installimg.sh"
 export PATH="$T/bin:$PATH" WORK=$W BACKUPS=$T/backups
@@ -50,7 +53,7 @@ ERASE_ANDROID_DATA=yes "$B/install.sh" > "$T/out1.txt" 2>&1 || { cat "$T/out1.tx
 check "darwin carved: 22048256..30437370" '[ "$(table | sed -n "s/.*darwin=\([^ ]*\).*/\1/p")" = 22048256..30437370 ]'
 check "userdata made again once, at its new size" '[ "$(st wiped)" = 1 ] && [ "$(st wiped_userdata)" = "[1601344, 22048255]" ]'
 check "the system image written once" '[ "$(st darwinput)" = 1 ]'
-check "slot b active, HakiOS in boot_b" '[ "$(st slot)" = b ] && grep -q "HakiOS U-Boot" "$FAKE/parts/boot_b.img"'
+check "slot b active, HakiOS in boot_b" '[ "$(st slot)" = b ] && grep -a -q "HKUB" "$FAKE/parts/boot_b.img"'
 check "dtbo_b now slot a's" 'cmp -s "$FAKE/parts/dtbo_b.img" "$FAKE/parts/dtbo_a.img"'
 check "slot a untouched" 'cmp -s "$FAKE/parts/boot_a.img" "$T/parts.orig/boot_a.img" && cmp -s "$FAKE/parts/dtbo_a.img" "$T/parts.orig/dtbo_a.img"'
 check "the backup: the table before, stock boot_b" 'cmp -s "$BACKUPS/b1289b47/gpt-head.bin" "$SAVED/gpt-head.orig.bin" && cmp -s "$BACKUPS/b1289b47/boot_b.img" "$T/parts.orig/boot_b.img"'
@@ -71,6 +74,12 @@ st_set; "$B/install.sh" > "$T/out4.txt" 2>&1 < /dev/null || { cat "$T/out4.txt";
 check "nothing erased, no question asked" '[ "$(st wiped)" = 1 ] && grep -q "darwin is there already" "$T/out4.txt"'
 check "the system image written again, into slot b" '[ "$(st darwinput)" = 2 ] && [ "$(st slot)" = b ]'
 check "the backup kept as it was" 'cmp -s "$BACKUPS/b1289b47/boot_b.img" "$T/parts.orig/boot_b.img"'
+check "the update went into slot b, Android's boot_a untouched" 'grep -q "goes into slot b" "$T/out4.txt" && cmp -s "$FAKE/parts/boot_a.img" "$T/parts.orig/boot_a.img"'
+
+echo "== install again from another Mac (no backup there): HakiOS found in boot_b"
+st_set; BACKUPS=$T/backups2 "$B/install.sh" > "$T/out4b.txt" 2>&1 < /dev/null || { cat "$T/out4b.txt"; exit 1; }
+check "found in slot b and updated there; boot_a untouched" 'grep -q "HakiOS in: b" "$T/out4b.txt" && grep -q "goes into slot b" "$T/out4b.txt" && cmp -s "$FAKE/parts/boot_a.img" "$T/parts.orig/boot_a.img"'
+check "that backup says boot_b is HakiOS's, not the phone's own" 'grep -q "boot_b=hakios" "$T/backups2/b1289b47/info.txt"'
 
 echo "== a table the loader must refuse"
 st_set; python3 - <<EOF
@@ -95,6 +104,6 @@ echo "== uninstall"
 REMOVE=yes "$B/uninstall.sh" > "$T/out6.txt" 2>&1 || { cat "$T/out6.txt"; exit 1; }
 check "the table as it was (both copies)" 'cmp -s "$FAKE/head.bin" "$SAVED/gpt-head.orig.bin" && cmp -s "$FAKE/tail.bin" "$SAVED/gpt-tail.orig.bin"'
 check "userdata made again at its whole size" '[ "$(st wiped)" = 2 ] && [ "$(st wiped_userdata)" = "[1601344, 30437370]" ]'
-check "slot b as it was, slot a active, Android booted" 'for p in boot_b dtbo_b vbmeta_b; do cmp -s "$FAKE/parts/$p.img" "$T/parts.orig/$p.img" || exit 1; done; [ "$(st slot)" = a ] && [ "$(st mode)" = android ]'
+check "slot b as it was, slot a active, Android booted" '( for p in boot_b dtbo_b vbmeta_b; do cmp -s "$FAKE/parts/$p.img" "$T/parts.orig/$p.img" || exit 1; done ) && [ "$(st slot)" = a ] && [ "$(st mode)" = android ]'
 check "every fastboot write after a gptwrite came after a restart" '! awk "/gptwrite/{w=1} /: (boot|reboot)/{w=0} w && /oem (darwinput|readpart|darwininfo)/{bad=1} END{exit !bad}" "$FAKE/calls.txt"'
 [ -z "$FAILED" ] && echo "all as expected" || { echo "SOME FAILED (calls: $FAKE/calls.txt)"; trap - EXIT; exit 1; }

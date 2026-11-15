@@ -13,8 +13,8 @@ USBIMG=${USBIMG:-$WORK/out/hakios-fajita-usb.img}
 BACKUPS=${BACKUPS:-$HOME/HakiOS-6T-backup}
 GPTPLAN=$K/tools/gpt-plan.py
 export PATH="$D/hostbin:$PATH"
-# the marker of HakiOS's boot image (U-Boot's environment, both the USB one and the installed one)
-HAKIOS_MARK="HakiOS U-Boot on the OnePlus 6T"
+# HakiOS's boot image, as it lies in a boot partition: U-Boot is gzipped in it (pack-fajita.sh), but the container of
+# the loader's payload (HKUB, tools/mkubootimg.py) and the payload (XNUP, xnuloader/mkpayload.py) are not
 
 say() { echo "$ME: $*"; [ -n "${LOG:-}" ] && echo "$(date +%T) $*" >> "$LOG"; return 0; }
 die() { echo "$ME: $*" >&2; [ -n "${LOG:-}" ] && echo "$(date +%T) STOPPED: $*" >> "$LOG"; exit 1; }
@@ -96,6 +96,9 @@ table_of() {
 # a partition read whole, twice, into $1/NAME.img
 read_part() { read_twice "$1/$2.img" oem readpart "$2"; }
 
-carries_hakios() { LC_ALL=C grep -a -q "$HAKIOS_MARK" "$1"; }
+carries_hakios() { LC_ALL=C grep -a -q "HKUB" "$1" && LC_ALL=C grep -a -q "XNUP" "$1"; }
+
+# the first SIZE bytes of a partition read back ($2) are the image ($1): macOS's cmp -n compares the whole files
+same_prefix() { head -c "$(stat -f %z "$1")" "$2" | cmp -s - "$1"; }
 
 other_slot() { [ "$1" = a ] && echo b || echo a; }

@@ -99,7 +99,11 @@ def main(a):
             save(s)
             return okay()
         if cmd == 'flash':
-            shutil.copy(a[2], path(f'parts/{a[1]}.img'))
+            # a partition is larger than what is flashed into it: what lay past the image stays (as on the phone)
+            new, dst = open(a[2], 'rb').read(), path(f'parts/{a[1]}.img')
+            old = open(dst, 'rb').read() if os.path.exists(dst) else b''
+            old = old + bytes(max(0, 65536 - len(old)))
+            open(dst, 'wb').write(new + old[len(new):])
             if a[1].startswith('boot_') and gp_marker(a[2]):
                 s['hakios_slot'] = a[1][-1]
             save(s)
@@ -207,7 +211,8 @@ def main(a):
 
 
 def gp_marker(f):
-    return b'HakiOS U-Boot on the OnePlus 6T' in open(f, 'rb').read()
+    b = open(f, 'rb').read()
+    return b'HKUB' in b and b'XNUP' in b
 
 
 if __name__ == '__main__':

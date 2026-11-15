@@ -20,7 +20,7 @@
 # kept in darwin across restarts. Back to Android: ./switch.sh android; HakiOS off the phone: ./uninstall.sh.
 #
 # For re-testing a phone that had darwin: EXPECT_DARWIN=FIRST..LAST stops unless darwin is, or would be made,
-# exactly those blocks; ERASE_ANDROID_DATA=yes answers step 2's question.
+# exactly those blocks; ERASE_ANDROID_DATA=yes answers step 2's question; NO_REBOOT=1 leaves the phone in fastboot.
 set -e
 ME=install
 . "$(cd "$(dirname "$0")" && pwd)/lib-install.sh"
@@ -56,6 +56,10 @@ HAKIOS_IN=
 for s in a b; do carries_hakios "$T/boot_$s.img" && HAKIOS_IN="$HAKIOS_IN$s"; done
 if [ -n "${TARGET:-}" ]; then
 	case "$TARGET" in a|b) ;; *) die "TARGET is a or b" ;; esac
+elif [ -f "$BK/info.txt" ]; then
+	# installed before from this Mac: the slot it went into, whatever its boot partition holds now
+	TARGET=$(sed -n 's/.* target=\([ab]\).*/\1/p' "$BK/info.txt")
+	[ -n "$TARGET" ] || die "$BK/info.txt names no slot"
 elif [ ${#HAKIOS_IN} -eq 1 ]; then TARGET=$HAKIOS_IN
 elif [ "$HAKIOS_IN" = ab ]; then TARGET=$CUR
 else TARGET=$(other_slot "$CUR"); fi
@@ -163,11 +167,12 @@ fb flash "boot_$TARGET" "$IMG" >/dev/null || die "flashing boot_$TARGET failed"
 # read back through the loader, before the slot is made active
 to_loader
 read_part "$T" "boot_$TARGET"
-cmp -s -n "$(stat -f %z "$IMG")" "$IMG" "$T/boot_$TARGET.img" || die "boot_$TARGET read back is not the image flashed"
+same_prefix "$IMG" "$T/boot_$TARGET.img" || die "boot_$TARGET read back is not the image flashed"
 to_abl
 fb set_active "$TARGET" >/dev/null || die "fastboot set_active $TARGET failed"
 [ "$(getvar current-slot)" = "$TARGET" ] || die "ABL did not make slot $TARGET active"
 say "   boot_$TARGET flashed and read back; slot $TARGET active"
+if [ -n "${NO_REBOOT:-}" ]; then say "done; the phone stays in fastboot (NO_REBOOT): fastboot reboot starts HakiOS"; exit 0; fi
 fbq reboot >/dev/null || true
 cat <<EOF
 
