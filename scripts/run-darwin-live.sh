@@ -59,7 +59,8 @@ python3 xnuloader/mkpayload.py -o build/darwin-run.bin kernel="$KERNEL" ${RD:+ra
 timeout 60 fastboot stage build/darwin-run.bin 2>&1 | grep -q OKAY || { echo "darwin: payload 上傳失敗"; exit 1; }
 timeout 10 fastboot oem run >/dev/null 2>&1 || true
 echo "darwin: 核心開跑 $(date +%T)，最多 $SECS 秒"
-DEADLINE=$(( $(date +%s) + SECS + 100 )); result=
+# (SECS, then the save of /private/var as the run ends -- 50-95 s, var_save_ms at most -- and the devices stopped)
+DEADLINE=$(( $(date +%s) + SECS + 300 )); result=
 while [ $(date +%s) -lt $DEADLINE ]; do
 	result=$(timeout 15 fastboot getvar result 2>&1 | grep '^result:' || true)
 	case "$result" in ""|*running*) ;; *) break ;; esac
