@@ -10,7 +10,7 @@
 ![iOS](https://img.shields.io/badge/iOS-16.5%20(20F66)-555)
 [![License](https://img.shields.io/badge/license-MIT-555)](LICENSE)
 
-[English](README.md) · [版本說明](releases/v0.5-beta.md#繁體中文) · [更新紀錄](CHANGELOG.zh-TW.md) · [安裝說明](beta/README.md#繁體中文) · [文件](#文件)
+[English](README.md) · [版本說明](releases/v0.6-beta.md#繁體中文) · [更新紀錄](CHANGELOG.zh-TW.md) · [安裝說明](beta/README.md#繁體中文) · [文件](#文件)
 
 <img src="docs/images/bootscreen-phones.png" width="620" alt="OnePlus 6T 上的 HakiOS 開機畫面：HakiOS 字樣、進度條、底部的開機資訊；旁邊是顯示 loader 記錄的除錯版">
 
@@ -48,7 +48,7 @@ Beta 0.5 安裝在 OnePlus 6T 上的實拍。
 
 ## 功能狀態
 
-2026 年 11 月在實機上確認的結果（Beta 0.5）。✅ 可用・🟡 部分可用・❌ 還不能用。
+2026 年 11 月在實機上確認的結果（Beta 0.6）。✅ 可用・🟡 部分可用・❌ 還不能用。
 每一項背後的驅動，以及跟上游參考機的比較：[硬體支援](docs/hardware.zh-TW.md)。
 
 | | 功能 | 狀態 | 說明 |
@@ -73,7 +73,7 @@ Beta 0.5 安裝在 OnePlus 6T 上的實拍。
 | **電源與硬體** | 電量、充電 | ✅ | USB 1 A 充電 |
 | | 震動、手電筒 | ✅ | |
 | | 溫度保護 | ✅ | 21 個感測器；過熱時 CPU、GPU 降頻 |
-| | 相機 | ❌ | 還沒開始 |
+| | 相機 | 🟡 | 主鏡頭（自動對焦、防手震）與前鏡頭，約每秒 30 幀；第二顆後鏡頭還沒 |
 | | 指紋、動作與光線感測器 | ❌ | 還沒開始 |
 | **Apple 服務** | App Store、Apple ID、iCloud、Apple 地圖 | ❌ | 需要已啟用的裝置；不打算支援 |
 
@@ -81,11 +81,11 @@ Beta 0.5 安裝在 OnePlus 6T 上的實拍。
 
 需要：**已解鎖 bootloader 的 OnePlus 6T**（fajita）、裝好 [Homebrew](https://brew.sh) 的 **Mac**、自己下載的
 **iPhone X iOS 16.5 IPSW**（20F66），以及約 15 GB 空間。從[最新版本](https://github.com/kiwiiiii-eth/hakios-fajita/releases/latest)下載
-`hakios-6t-v0.5-beta.tar.gz`，然後：
+`hakios-6t-v0.6-beta.tar.gz`，然後：
 
 ```sh
 brew install python sevenzip zstd coreutils android-platform-tools
-tar xzf hakios-6t-v0.5-beta.tar.gz && cd hakios-6t-v0.5-beta
+tar xzf hakios-6t-v0.6-beta.tar.gz && cd hakios-6t-v0.6-beta
 ./setup.sh ~/Downloads/iPhone10,3,iPhone10,6_16.5_20F66_Restore.ipsw   # 只跑一次：抽手機韌體、解 IPSW
 ./run.sh        # 從 Mac 開機試用：不刷任何分區，重開就回 Android
 ./install.sh    # 或安裝到手機：之後按電源鍵直接進 iOS

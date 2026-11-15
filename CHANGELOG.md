@@ -3,6 +3,24 @@
 Every release of HakiOS for the OnePlus 6T. The full notes, with the known issues of each, are in [`releases/`](releases/)
 and on the [releases page](https://github.com/kiwiiiii-eth/hakios-fajita/releases). [繁體中文](CHANGELOG.zh-TW.md)
 
+## [0.6-beta] — 2026-11-16
+
+### Added
+- **The cameras**: the main camera (IMX519) in the Camera app at about 30 frames a second, with autofocus and optical
+  image stabilisation, and the front camera (IMX371); photographs, the sharpest of four frames. The colour comes from
+  the phone's own tuning, which `setup.sh` takes from the phone with the cameras' other files (adb, or read through the
+  loader). `cam_full=1` uses the main camera's whole 16 MP array; `cam_ois=0` leaves the stabiliser off.
+- **TrollStore 2.1.1**, installed at the first start (`TROLLSTORE=0 ./setup.sh` leaves it out).
+- **A Dynamic Island to choose**: `ISLAND=1 ./install.sh`, or `EXTRA="island=1" ./run.sh`.
+
+### Changed
+- Photographs are JPEG by default (Formats → Most Compatible) unless a format was chosen before.
+- The GPU is kept fast while the camera runs; a hot phone makes fewer camera frames instead of holding the processors
+  at full speed.
+
+### Fixed
+- The front camera's picture was purple; the camera knocked at every switch between front and back.
+
 ## [0.5-beta] — 2026-11-15
 
 ### Added

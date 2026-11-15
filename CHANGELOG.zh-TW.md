@@ -3,6 +3,20 @@
 HakiOS for OnePlus 6T 的每一個版本。完整說明（含各版已知問題）在 [`releases/`](releases/) 與
 [Releases 頁面](https://github.com/kiwiiiii-eth/hakios-fajita/releases)。[English](CHANGELOG.md)
 
+## [0.6-beta] — 2026-11-16
+
+### 新增
+- **相機**：相機 App 的主鏡頭（IMX519）約每秒 30 幀，有自動對焦與光學防手震；前鏡頭（IMX371）也能用；拍照取四張中最清楚的一張。色彩用手機原廠調校，`setup.sh` 會連同其他相機檔一起從手機抽出（adb，或透過 loader 唯讀讀取）。`cam_full=1` 用主鏡頭完整 1600 萬畫素；`cam_ois=0` 關閉防手震。
+- **TrollStore 2.1.1**：第一次開機時自動安裝（`TROLLSTORE=0 ./setup.sh` 可不裝）。
+- **可選動態島**：`ISLAND=1 ./install.sh`，或 `EXTRA="island=1" ./run.sh`。
+
+### 改進
+- 照片預設存 JPEG（格式 → 最相容），之前自己選過的維持原選擇。
+- 相機運作時 GPU 維持高速；手機過熱時相機少出幀，不再把 CPU 鎖在最高速。
+
+### 修正
+- 前鏡頭畫面偏紫；前後鏡頭切換時會「喀」一聲。
+
 ## [0.5-beta] — 2026-11-15
 
 ### 新增

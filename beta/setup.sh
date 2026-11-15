@@ -5,7 +5,7 @@
 #
 # What it does (each step is skipped when its result is already there; run it again after a failure):
 #   1. checks the tools: macOS (Apple silicon or Intel), python3, fastboot, adb, 7zz, zstd, cc, curl, 15 GB free
-#   2. fetches the sources of this release from GitHub (hakios-xnu-kernel at fajita-v0.5-beta, hakios-fajita at v0.5-beta)
+#   2. fetches the sources of this release from GitHub (hakios-xnu-kernel at fajita-v0.6-beta, hakios-fajita at v0.6-beta)
 #   3. puts the kit's prebuilt kernel and programs in place (nothing is compiled)
 #   4. pulls the phone's firmware over adb (the phone in Android, USB debugging on): hakios-fajita/pull-firmware.sh
 #   5. unpacks your IPSW (sysimage/unpack.sh, about 5 minutes)
@@ -21,8 +21,8 @@ set -e
 KIT=$(cd "$(dirname "$0")" && pwd)
 WORK=${WORK:-$KIT/work}
 IPSW=${1:-${IPSW:-}}
-XNU_TAG=fajita-v0.5-beta
-DEV_TAG=v0.5-beta
+XNU_TAG=fajita-v0.6-beta
+DEV_TAG=v0.6-beta
 GH=https://github.com/kiwiiiii-eth
 K=$WORK/hakios-xnu-kernel
 D=$WORK/hakios-fajita
@@ -82,7 +82,7 @@ echo "ok"
 say "4/8 the phone's firmware"
 # (FW=DIR: take fw-gpu, fw-modem and fw-bt from DIR, e.g. an earlier kit's work/hakios-xnu-kernel, instead of the phone)
 if [ -n "${FW:-}" ] && [ ! -f "$K/fw-modem/modem.mdt" ]; then
-	for d in fw-gpu fw-modem fw-bt; do [ -d "$FW/$d" ] && cp -R "$FW/$d" "$K/"; done
+	for d in fw-gpu fw-modem fw-bt fw-camera; do [ -d "$FW/$d" ] && cp -R "$FW/$d" "$K/"; done
 fi
 if [ -f "$K/fw-modem/modem.mdt" ] && [ -f "$K/fw-gpu/a630_zap.mdt" ] && [ -f "$K/fw-bt/crbtfw21.tlv" ] &&
    [ -f "$K/fw-gpu/a630_gmu.bin" ] && [ -f "$K/fw-modem/ath10k/WCN3990/hw1.0/board-2.bin" ]; then
@@ -108,6 +108,18 @@ python3 "$K/xnuloader/mkidentity.py" --fill "$K/xnuloader/loader.efi" "$T/dt.bin
 HAKIOS_ROOT=$WORK "$D/scripts/mk-usbimg.sh" >/dev/null
 [ -f "$WORK/out/hakios-fajita-usb.img" ] || die "the USB boot image was not made"
 echo "ok: work/out/hakios-fajita-usb.img"
+# the cameras' files (new in 0.6: the sensors' module files and colour tuning, from the phone's vendor partition), here
+# because the loader route needs the boot image just made. From Android over adb when it is there; else through the
+# loader, reading only (scripts/pull-camera-modules.sh: brew install e2fsprogs). Without them the cameras do not start.
+if ! ls "$K"/fw-camera/com.qti.sensormodule.*.bin >/dev/null 2>&1; then
+	if adb get-state >/dev/null 2>&1; then
+		K=$K "$D/pull-firmware.sh" || true
+	else
+		echo "the cameras' files: read from the phone's vendor partition through the loader (nothing is written)"
+		{ WORK=$WORK "$D/scripts/pull-camera-modules.sh" b || WORK=$WORK "$D/scripts/pull-camera-modules.sh" a; } ||
+			echo "no camera files: the cameras will not start (run scripts/pull-camera-modules.sh to try again)"
+	fi
+fi
 
 # --- 7. SSH keys and the package manager's prefix ---------------------------------------------------
 say "7/8 your SSH keys and the package manager's prefix (sshd, zsh, neofetch)"
@@ -116,6 +128,8 @@ mkdir -p "$K/ssh"
 [ -f "$K/ssh/client_ed25519" ] || ssh-keygen -q -t ed25519 -N '' -C hakios-6t-login -f "$K/ssh/client_ed25519"
 cp "$K/ssh/client_ed25519.pub" "$K/ssh/authorized_keys"
 [ -d "$K/jb/root/var/jb" ] || (cd "$K" && tools/mk-jb.sh)
+# (TrollStore, new in 0.6, into a prefix that an earlier setup.sh built; TROLLSTORE=0 leaves it out)
+[ "${TROLLSTORE:-1}" = 0 ] || [ -x "$K/jb/root/var/jb/usr/libexec/hakios-trollstore" ] || (cd "$K" && tools/jb-trollstore.sh)
 
 # --- 8. the images ----------------------------------------------------------------------------------
 say "8/8 root.apfs and system.apfs (about 5 minutes)"

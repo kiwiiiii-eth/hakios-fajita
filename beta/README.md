@@ -1,4 +1,4 @@
-# HakiOS on the OnePlus 6T — Beta 0.5 test kit
+# HakiOS on the OnePlus 6T — Beta 0.6 test kit
 
 The Darwin (XNU) kernel and the iOS 16.5 user space on a OnePlus 6T, two ways:
 
@@ -8,7 +8,7 @@ The Darwin (XNU) kernel and the iOS 16.5 user space on a OnePlus 6T, two ways:
   lives on a 20 GB volume of its own on the phone (new in 0.5: Settings shows the space, and a restart takes under a
   minute). Android stays in its own slot, a command away. **Installing erases Android's data** (see below).
 
-Release notes: https://github.com/kiwiiiii-eth/hakios-fajita/blob/main/releases/v0.5-beta.md
+Release notes: https://github.com/kiwiiiii-eth/hakios-fajita/blob/main/releases/v0.6-beta.md
 
 ## You need
 
@@ -76,6 +76,11 @@ journaled.
   type in Notes. Pair again after every boot.
 - The flashlight and brightness from Control Center.
 - Safari: open any site (pages load as of Beta 0.3). Wi-Fi off and on in Settings: the network is joined again by itself.
+- The cameras (new in 0.6): the Camera app, the main camera and the front one, a photograph (JPEG by default; a video
+  saves too). `setup.sh` takes their files from your phone; without them the Camera
+  app stays black.
+- TrollStore (new in 0.6): on the home screen after the first start; install an IPA from Files or Safari.
+- The Dynamic Island (new in 0.6): `ISLAND=1 ./install.sh`, or `EXTRA="island=1" ./run.sh`.
 - Location (experimental): `EXTRA="gnss=1" ./run.sh` (or an install image built with `EXTRA="gnss=1"`), outdoors with a
   view of the sky, then Google Maps in Safari (Apple Maps needs an activated device and shows no map). Location
   Services turn on by themselves; satellites are seen even indoors. Reports welcome: an outdoor GPS fix is not yet confirmed.
@@ -88,7 +93,7 @@ for about 15 seconds restarts the phone into Android.
 
 Support: issues at https://github.com/kiwiiiii-eth/hakios-fajita/issues; X [@0x718_718](https://x.com/0x718_718); donations (BTC) `bc1p6n329lsup5kpyemsvhqen70h0a4nc2ujyxflza5tfw6a4j8r4afq47gf58`.
 
-Known: no cameras; with `run.sh` nothing on the phone survives a reboot (install for that); Bluetooth pairings are lost
+Known: the second rear camera is not used; with `run.sh` nothing on the phone survives a reboot (install for that); Bluetooth pairings are lost
 at every boot; scrolling is not yet smooth (55-60 frames a second, about one in ten late); `neofetch` says "iPhone X"
 because the user space believes it is one.
 
@@ -96,7 +101,7 @@ because the user space believes it is one.
 
 # 繁體中文
 
-Darwin（XNU）核心＋iOS 16.5 使用者空間跑在 OnePlus 6T 上（Beta 0.5），兩種用法：
+Darwin（XNU）核心＋iOS 16.5 使用者空間跑在 OnePlus 6T 上（Beta 0.6），兩種用法：
 
 - **從 Mac 開機**（`./run.sh`，同以前）：透過 USB 開機，整套系統在記憶體裡，**不刷任何分區**，重開機就回到 Android。
 - **安裝到手機**（`./install.sh`）：按電源鍵就直接開進 iOS，不用 Mac、不用接線。資料存在手機上一個約 20 GB 的磁碟區（0.5 新增：設定裡看得到完整容量，重開不到 1 分鐘）。
@@ -135,6 +140,9 @@ Darwin（XNU）核心＋iOS 16.5 使用者空間跑在 OnePlus 6T 上（Beta 0.5
 - **藍牙**：掃描、和 Mac 配對；在「設定 → 藍牙」配對 BLE 鍵盤，到備忘錄打字（每次開機都要重新配對）。
 - **控制中心**：手電筒、亮度。
 - **Safari**：開任何網站（Beta 0.3 起能載入）。在設定把 Wi‑Fi 關掉再打開，會自動連回剛才的網路。
+- **相機**（0.6 新增）：相機 App 的主鏡頭與前鏡頭、拍照（預設存 JPEG；也能錄影）。`setup.sh` 會從你的手機抽相機檔，沒有的話相機 App 是黑的。
+- **TrollStore**（0.6 新增）：第一次開機後出現在主畫面，可從「檔案」或 Safari 安裝 IPA。
+- **動態島**（0.6 新增）：`ISLAND=1 ./install.sh`，或 `EXTRA="island=1" ./run.sh`。
 - **定位（實驗中）**：`EXTRA="gnss=1" ./run.sh`（或打包安裝映像時帶 `EXTRA="gnss=1"`），到戶外看得到天空的地方，用 Safari 開 Google 地圖（Apple 地圖需要已啟用的裝置，不會顯示圖資）。定位服務會自動打開，室內就能看到衛星。戶外 GPS 定位還沒確認，歡迎回報。
 
 **回報問題**：到 GitHub issues，附上 `work/out/logs/` 的紀錄、你做了什麼、看到什麼。
@@ -143,4 +151,4 @@ Darwin（XNU）核心＋iOS 16.5 使用者空間跑在 OnePlus 6T 上（Beta 0.5
 
 **其他**：`fastboot oem stop` 可以提早結束一輪；長按電源鍵約 15 秒會重開回 Android。
 
-**已知問題**：沒有相機；用 `run.sh` 開機時資料不會保留（要保留請安裝）；藍牙配對每次開機都要重來；滑動還不夠順（每秒 55～60 幀，約一成的幀會晚到）；`neofetch` 顯示 iPhone X。
+**已知問題**：第二顆後鏡頭還沒用上；用 `run.sh` 開機時資料不會保留（要保留請安裝）；藍牙配對每次開機都要重來；滑動還不夠順（每秒 55～60 幀，約一成的幀會晚到）；`neofetch` 顯示 iPhone X。

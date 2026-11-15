@@ -1,5 +1,5 @@
 #!/bin/bash
-# HakiOS on the OnePlus 6T, Beta 0.5: which system the phone starts, once install.sh has put HakiOS in a slot of its own.
+# HakiOS on the OnePlus 6T, Beta 0.6: which system the phone starts, once install.sh has put HakiOS in a slot of its own.
 #
 #   ./switch.sh android     Android's slot active: the phone starts Android
 #   ./switch.sh hakios      HakiOS's slot active: the phone starts iOS
