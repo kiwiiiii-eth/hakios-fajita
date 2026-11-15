@@ -61,6 +61,14 @@ check "slot a untouched" 'cmp -s "$FAKE/parts/boot_a.img" "$T/parts.orig/boot_a.
 check "the backup: the table before, stock boot_b" 'cmp -s "$BACKUPS/b1289b47/gpt-head.bin" "$SAVED/gpt-head.orig.bin" && cmp -s "$BACKUPS/b1289b47/boot_b.img" "$T/parts.orig/boot_b.img"'
 check "the phone booted iOS" '[ "$(st mode)" = ios ]'
 
+echo "== a darwin too small for a data volume is refused before anything is written"
+st_set() { python3 - "$@" <<EOF
+import json; s=json.load(open('$FAKE/state.json')); s['mode']='abl'; json.dump(s, open('$FAKE/state.json','w'))
+EOF
+}
+st_set; GIB=12 "$B/install.sh" > "$T/out-gib.txt" 2>&1 < /dev/null && R=0 || R=$?
+check "GIB=12 refused (the data volume would be 2 MB)" '[ $R -ne 0 ] && grep -q "GIB is to be 20 to 64" "$T/out-gib.txt"'
+
 echo "== switch android, then hakios"
 st_set() { python3 - "$@" <<EOF
 import json; s=json.load(open('$FAKE/state.json')); s['mode']='abl'; json.dump(s, open('$FAKE/state.json','w'))

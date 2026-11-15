@@ -41,7 +41,7 @@ What `install.sh` does, saying each step first:
 
 1. Reads the phone's partition table and the boot, dtbo and vbmeta partitions of both slots (twice, compared) and keeps
    them in `~/HakiOS-6T-backup/<serial>/`. **Keep that folder**: `uninstall.sh` puts the phone back from it.
-2. Makes a partition `darwin` of the last 32 GiB of userdata (`GIB=…` for 12–64). **Everything Android keeps is erased**
+2. Makes a partition `darwin` of the last 32 GiB of userdata (`GIB=…` for 20–64; the data volume gets what is past 12 GiB). **Everything Android keeps is erased**
    — apps, photos, accounts — and Android starts as new. You type `ERASE` first. The loader writes the new table only
    if nothing but userdata's end and darwin changes, and reads it back.
    Then makes the data volume: an empty HFS Plus volume in darwin from 12 GiB on (about 20 GB), once, with macOS's own
@@ -115,7 +115,7 @@ Darwin（XNU）核心＋iOS 16.5 使用者空間跑在 OnePlus 6T 上（Beta 0.5
 **安裝到手機**：
 - `./install.sh`：第一次約 10 分鐘；之後再跑一次就是更新，不會清任何資料。
 - 它會：①把分區表與兩個 slot 的 boot／dtbo／vbmeta 讀兩次比對後備份到 `~/HakiOS-6T-backup/<序號>/`（**這個資料夾請留著**，
-  解除安裝靠它）②從 userdata 尾端切出 32 GiB 的 `darwin` 分區（`GIB=…` 可改 12～64），**Android 的資料會全部清除**，
+  解除安裝靠它）②從 userdata 尾端切出 32 GiB 的 `darwin` 分區（`GIB=…` 可改 20～64；資料磁碟區是 12 GiB 之後的部分），**Android 的資料會全部清除**，
   要先輸入 `ERASE`；loader 只在「只改 userdata 結尾和 darwin」時才寫入，並讀回確認 ③把 iOS 系統映像寫進 darwin 並讀回（約 3 分鐘）
   之後建立資料磁碟區：darwin 12 GiB 之後約 20 GB 的空白 HFS+（只做一次，用 macOS 內建的 `newfs_hfs`；系統映像與 12 GiB 之前的內容不動，並會檢查確認）
   ④把 HakiOS 的開機映像刷進 Android 沒在用的 slot，並設為使用中。Android 那個 slot 完全不動。

@@ -2,7 +2,8 @@
 # HakiOS on the OnePlus 6T, Beta 0.5: installed, so that the phone starts iOS by itself -- no Mac, no cable.
 #
 #   ./install.sh                 install; run again to update an install (steps 3 and 4 only: nothing is erased)
-#   GIB=32 ./install.sh          the size of the partition darwin when it is made (12 to 64; 32 by default)
+#   GIB=32 ./install.sh          the size of the partition darwin when it is made (20 to 64; 32 by default): the data
+#                                volume for /private/var is what is past its first 12 GiB (8 to 52 GiB)
 #   TARGET=a|b ./install.sh      the slot to install into (by default the one HakiOS is in already, else the one
 #                                Android is not using)
 #
@@ -31,7 +32,7 @@ GIB=${GIB:-32}
 	die "run ./setup.sh first"
 LC_ALL=C grep -a -q "oem gptwrite" "$K/xnuloader/loader.efi" || die "this loader is older than Beta 0.4: run ./setup.sh again"
 command -v fastboot >/dev/null || die "no fastboot (brew install android-platform-tools)"
-[ "$GIB" -ge 12 ] && [ "$GIB" -le 64 ] 2>/dev/null || die "GIB is to be 12 to 64"
+[ "$GIB" -ge 20 ] && [ "$GIB" -le 64 ] 2>/dev/null || die "GIB is to be 20 to 64 (the data volume is what is past 12 GiB)"
 [ "$(fastboot devices | wc -l)" -le 1 ] || die "more than one phone in fastboot: leave one"
 if [ ! -d "$K/.git" ]; then export HAKIOS_VERSION_SUFFIX=${HAKIOS_VERSION_SUFFIX:--v0.5-beta}; fi
 T=$(mktemp -d); trap 'rm -rf "$T"' EXIT
@@ -171,6 +172,9 @@ read_twice "$T/vol.bin" oem readunit "$UNIT" $((DW_FIRST + DATA_FIRST)) 1
 if [ -z "${FRESH_DARWIN:-}" ] && { [ "$(dd if="$T/vol.bin" bs=1 skip=1024 count=2 2>/dev/null)" = HX ] ||
    [ "$(dd if="$T/vol.bin" bs=1 skip=1024 count=2 2>/dev/null)" = H+ ]; }; then
 	say "2b. the data volume is there already: left as it is"
+elif [ $(( DW_BLOCKS - DATA_FIRST )) -lt 1048576 ]; then
+	# a darwin carved by Beta 0.4 with GIB under 16: no room past the system image and the store for a volume of 4 GiB
+	say "2b. darwin ($(( DW_BLOCKS * 4096 / 1073741824 )) GiB) is too small for a data volume: /private/var stays kept as Beta 0.4 keeps it (./uninstall.sh, then ./install.sh with GIB=32, makes room)"
 else
 	say "2b. making the data volume for /private/var ($(( (DW_BLOCKS - DATA_FIRST) * 4096 / 1073741824 )) GiB of darwin, empty)"
 	python3 "$K/tools/mkdatavol.py" "$T/data.simg" --first $DATA_FIRST --darwin $DW_BLOCKS >> "$LOG" 2>&1 ||
