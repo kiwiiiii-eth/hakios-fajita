@@ -8,11 +8,12 @@ them this way is up to you (see https://github.com/oosexgang/hakios-xnu-kernel/b
 
 | In the kit | What | Licence | Source |
 |---|---|---|---|
-| `prebuilt/hakios-kernel` | XNU with HakiOS's and this port's drivers | APSL-2.0 (XNU); the drivers' own licences; Linux's ath10k under ISC | https://github.com/kiwiiiii-eth/hakios-xnu-kernel/tree/fajita-v0.3-beta and Apple's xnu-8796.121.2 |
+| `prebuilt/hakios-kernel` | XNU with HakiOS's and this port's drivers | APSL-2.0 (XNU); the drivers' own licences; Linux's ath10k under ISC | https://github.com/kiwiiiii-eth/hakios-xnu-kernel/tree/fajita-v0.5-beta and Apple's xnu-8796.121.2 |
 | `prebuilt/loader.blank.efi` | HakiOS's UEFI loader, blank identity | HakiOS's licence | same, `xnuloader/` |
 | `prebuilt/userland/*` (but one) | HakiOS's user-space programs | HakiOS's licence | same, `userland/src/` |
 | `prebuilt/userland/libOSMesa.8.dylib` | Mesa (OSMesa, freedreno) | MIT | https://mesa3d.org; HakiOS's patches in `tools/mesa/` |
-| U-Boot (packed by `setup.sh` from `hakios-fajita/prebuilt/u-boot.bin`) | the boot loader `fastboot boot` starts | GPL-2.0+ | see hakios-fajita's README, "U-Boot" |
+| U-Boot (packed by `setup.sh` from `hakios-fajita/prebuilt/u-boot.bin`; `install.sh`'s from `u-boot-install.bin`) | the boot loader `fastboot boot` starts, and the installed one | GPL-2.0+ | see hakios-fajita's README, "U-Boot" |
+| the boot screen's pictures, in the loader (`xnuloader/bootscreen_assets.h`) | drawn from the typefaces Inter and JetBrains Mono | SIL Open Font License 1.1 | https://github.com/rsms/inter, https://github.com/JetBrains/JetBrainsMono |
 
 `setup.sh` also fetches, from their own sites: the two repositories at this release's tags (GitHub), linux-firmware's
 `a630_gmu.bin`, `a630_sqe.fw` and ath10k's WCN3990 files (git.kernel.org; their licences in linux-firmware's

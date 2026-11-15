@@ -5,8 +5,8 @@ It boots to the home screen with the GPU, touch, Wi-Fi, **LTE data**, **sound fr
 (**BLE keyboards type**), charging, vibration and the flashlight working, entirely from RAM. Safari loads pages, and Wi-Fi
 joins a known network again by itself.
 
-**Current release: Beta 0.4 (`v0.4-beta`, November 2026)** — it can be installed, so that the phone starts iOS by
-itself; see [the release notes](releases/v0.4-beta.md) and [testing Beta 0.4](#testing-beta-04).
+**Current release: Beta 0.5 (`v0.5-beta`, November 2026)** — installed, the phone starts iOS by itself, with its data on
+a 20 GB volume of its own; see [the release notes](releases/v0.5-beta.md) and [testing Beta 0.5](#testing-beta-05).
 
 This is a device port of [HakiOS](https://github.com/oosexgang/hakios-xnu-kernel), which ports the open-source XNU kernel to
 Qualcomm phones. The upstream reference phone is the POCO X5 Pro (Snapdragon 778G). The 6T is a different SoC generation, so
@@ -144,15 +144,15 @@ from [`oosexgang/hakios-uefi@1c65228`](https://github.com/oosexgang/hakios-uefi/
 plus this repository's `u-boot/files/` and `u-boot/patches/sdm845-carveout.patch`. `scripts/fetch-uboot.sh` and
 `scripts/build-uboot-vm.sh` rebuild it in a Linux VM (`aarch64-linux-gnu-`).
 
-## Testing Beta 0.4
+## Testing Beta 0.5
 
-The easy way is the **test kit** on the [Beta 0.4 release](https://github.com/kiwiiiii-eth/hakios-fajita/releases/tag/v0.4-beta):
+The easy way is the **test kit** on the [Beta 0.5 release](https://github.com/kiwiiiii-eth/hakios-fajita/releases/tag/v0.5-beta):
 the kernel, the loader and our programs prebuilt, so no Xcode is needed. You bring a OnePlus 6T with an unlocked bootloader
 (`run.sh` flashes nothing: Android stays; `install.sh` erases Android's data, see the kit's README), a Mac (Apple silicon; Intel should work, untried) with [Homebrew](https://brew.sh), and Apple's iOS 16.5 IPSW for iPhone X (20F66):
 
 ```sh
 brew install python sevenzip zstd coreutils android-platform-tools
-tar xzf hakios-6t-v0.4-beta.tar.gz && cd hakios-6t-v0.4-beta
+tar xzf hakios-6t-v0.5-beta.tar.gz && cd hakios-6t-v0.5-beta
 ./setup.sh ~/Downloads/iPhone10,3,iPhone10,6_16.5_20F66_Restore.ipsw   # once: firmware from your phone over adb, your IPSW, the images
 ./run.sh                                                               # a run from the Mac, an hour, nothing flashed
 ./install.sh                                                           # or onto the phone: it starts iOS by itself (erases Android's data)
