@@ -64,6 +64,11 @@ elif [ ${#HAKIOS_IN} -eq 1 ]; then TARGET=$HAKIOS_IN
 elif [ "$HAKIOS_IN" = ab ]; then TARGET=$CUR
 else TARGET=$(other_slot "$CUR"); fi
 ANDROID=$(other_slot "$TARGET")
+# never the slot the phone is using unless HakiOS is in it: after an Android update the slot recorded may hold Android
+if [ "$TARGET" = "$CUR" ] && ! carries_hakios "$T/boot_$TARGET.img"; then
+	die "slot $TARGET is the one in use and holds no HakiOS (Android, after an update?): nothing was changed.
+TARGET=$ANDROID ./install.sh installs into the other slot"
+fi
 say "   HakiOS goes into slot $TARGET; slot $ANDROID is left as it is (current slot: $CUR; HakiOS in: ${HAKIOS_IN:-none})"
 if [ ! -f "$BK/info.txt" ]; then
 	cp "$T/head.bin" "$BK/gpt-head.bin"; cp "$T/tail.bin" "$BK/gpt-tail.bin"
@@ -81,8 +86,29 @@ else
 	say "   the backup from the first install is in $BK, and checks"
 fi
 table_of "$T"
+[ "$COPIES" = same ] || mend_gpt "$T"
 [ -z "${EXPECT_DARWIN:-}" ] || [ "$DW" = none ] || [ "$DW" = "$EXPECT_DARWIN" ] ||
 	die "darwin is $DW, not $EXPECT_DARWIN: stopped"
+
+# userdata made again for its new size (fastboot -w), once ABL has read the new table: the step after the table is
+# written, and again if a run stopped between the two ($BK/wipe-pending says so)
+wipe_userdata() {
+	local want=$1 have ptype
+	to_abl
+	have=$(getvar partition-size:userdata)
+	[ -n "$have" ] && [ $((have)) -eq "$want" ] ||
+		die "ABL gives userdata $have bytes, not $want: it has not taken the new table; nothing erased"
+	ptype=$(getvar partition-type:userdata)
+	case "$ptype" in f2fs|ext4) ;; *) die "ABL gives userdata the type '$ptype': fastboot -w could not format it" ;; esac
+	say "   ABL sees userdata of $((want / 1073741824)) GiB ($ptype): erasing and formatting it (fastboot -w)"
+	fb -w >/dev/null || { echo "$FB_OUT" >&2; die "fastboot -w failed: Android cannot use userdata until it is made again: run ./install.sh again"; }
+	printf '%s\n' "$FB_OUT" | grep -q "Writing 'userdata'" ||
+		{ echo "$FB_OUT" >&2; die "fastboot -w did not format userdata: run ./install.sh again"; }
+	rm -f "$BK/wipe-pending"
+	say "   userdata made again"
+	to_loader
+	fbq oem darwininfo >/dev/null || die "the loader does not see darwin after the restart ($FB_OUT)"
+}
 
 # --- 2. the partition darwin ----------------------------------------------------------------------------------------
 if [ "$DW" = none ]; then
@@ -104,6 +130,9 @@ EOF
 	if [ "${ERASE_ANDROID_DATA:-}" = yes ]; then answer=ERASE; else read -r -p "    Type ERASE to go on: " answer; fi
 	[ "$answer" = ERASE ] || die "nothing was changed"
 	say "2. writing the new partition table"
+	# from here until fastboot -w is done, userdata's filesystem is larger than its partition: a run that stops in
+	# between leaves this, and the next one makes userdata again
+	echo $(( (NEW_UD_LAST - UD_FIRST + 1) * 4096 )) > "$BK/wipe-pending"
 	fbq oem ramdisk >/dev/null || die "the loader would not take the table ($FB_OUT)"
 	fb stage "$T/carve.stg" >/dev/null || die "sending the table failed"
 	fbq oem gptcheck >/dev/null || die "the loader refuses the table: $FB_OUT"
@@ -112,28 +141,20 @@ EOF
 	cat "$T/gptwrite.log" >> "$LOG" 2>/dev/null || true
 	[ $rc -eq 0 ] && printf '%s\n' "$GW_OUT" | grep -q "written" || {
 		echo "$GW_OUT" >&2
-		die "the table was not written whole. Do not restart into Android. The table from before is in $BK (gpt-head.bin,
-gpt-tail.bin): run ./install.sh again (it mends the two copies) or ./uninstall.sh"; }
+		die "the table was not written whole. Do not start Android: run ./install.sh again (it mends the two copies and goes
+on), or ./uninstall.sh. The table from before is in $BK (gpt-head.bin, gpt-tail.bin)"; }
 	read_twice "$T/head.new" oem readunit "$UNIT" 0 8
 	cmp -s <(dd if="$T/head.new" bs=4096 skip=1 count=1 2>/dev/null) <(dd if="$T/carve.stg" bs=4096 count=1 2>/dev/null) ||
 		die "the primary header read back is not the one sent"
 	say "   written and read back: userdata ends at $NEW_UD_LAST, darwin $NEW_DW"
 	# ABL reads the table when it starts: only then does it know userdata's new size
-	to_abl
-	want=$(( (NEW_UD_LAST - UD_FIRST + 1) * 4096 ))
-	have=$(getvar partition-size:userdata)
-	[ -n "$have" ] && [ $((have)) -eq $want ] ||
-		die "ABL gives userdata $have bytes, not $want: it has not taken the new table; nothing erased"
-	ptype=$(getvar partition-type:userdata)
-	case "$ptype" in f2fs|ext4) ;; *) die "ABL gives userdata the type '$ptype': fastboot -w could not format it" ;; esac
-	say "   ABL sees userdata of $((want / 1073741824)) GiB ($ptype): erasing and formatting it (fastboot -w)"
-	fb -w >/dev/null || { echo "$FB_OUT" >&2; die "fastboot -w failed: userdata is not usable by Android until it is made again"; }
-	printf '%s\n' "$FB_OUT" | grep -q "Writing 'userdata'" ||
-		{ echo "$FB_OUT" >&2; die "fastboot -w did not format userdata"; }
-	say "   userdata made again"
-	to_loader
-	fbq oem darwininfo >/dev/null || die "the loader does not see darwin after the restart ($FB_OUT)"
+	wipe_userdata "$(cat "$BK/wipe-pending")"
 	DW=$NEW_DW
+elif [ -f "$BK/wipe-pending" ]; then
+	say "2. the last run stopped after the new partition table, before userdata was made again: doing that now"
+	if [ "${ERASE_ANDROID_DATA:-}" = yes ]; then answer=ERASE; else read -r -p "    Android's data is erased (it is not usable as it is). Type ERASE to go on: " answer; fi
+	[ "$answer" = ERASE ] || die "nothing was changed (Android cannot use its data until ./install.sh makes userdata again)"
+	wipe_userdata "$(cat "$BK/wipe-pending")"
 else
 	first=${DW%..*}; last=${DW#*..}
 	[ $(( (last - first + 1) * 4096 )) -ge $((12 * 1073741824)) ] || die "the phone's darwin ($DW) is smaller than 12 GiB"

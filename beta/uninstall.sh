@@ -53,7 +53,15 @@ if [ -z "${KEEP_DARWIN:-}" ]; then
 	to_loader
 	read_gpt "$T"
 	table_of "$T"
-	if [ "$DW" = none ]; then
+	[ "$COPIES" = same ] || mend_gpt "$T"
+	if [ "$DW" = none ] && [ -f "$BK/unwipe-pending" ]; then
+		# the last run put the table back and stopped before userdata was made again
+		to_abl
+		say "making userdata again (fastboot -w), as the last run did not"
+		fb -w >/dev/null || { echo "$FB_OUT" >&2; die "fastboot -w failed: run ./uninstall.sh again"; }
+		printf '%s\n' "$FB_OUT" | grep -q "Writing 'userdata'" || { echo "$FB_OUT" >&2; die "fastboot -w did not format userdata"; }
+		rm -f "$BK/unwipe-pending"
+	elif [ "$DW" = none ]; then
 		say "the partition table has no darwin: left as it is"
 	else
 		python3 "$GPTPLAN" restore "$T/head.bin" "$T/tail.bin" "$BK/gpt-head.bin" "$BK/gpt-tail.bin" "$T/restore.stg" |
@@ -61,6 +69,7 @@ if [ -z "${KEEP_DARWIN:-}" ]; then
 		grep -q '^TABLE ' "$T/plan.txt" || die "the saved table cannot be put back: $(grep REFUSE "$T/plan.txt")"
 		UD_LAST=$(sed -n 's/^TABLE userdata=[0-9]*\.\.\([0-9]*\).*/\1/p' "$T/plan.txt")
 		say "putting back the partition table from before the install"
+		[ -n "${KEEP_ANDROID_DATA:-}" ] || : > "$BK/unwipe-pending"
 		fbq oem ramdisk >/dev/null || die "the loader would not take the table ($FB_OUT)"
 		fb stage "$T/restore.stg" >/dev/null || die "sending the table failed"
 		fbq oem gptcheck >/dev/null || die "the loader refuses the table: $FB_OUT"
@@ -81,6 +90,7 @@ if [ -z "${KEEP_DARWIN:-}" ]; then
 			say "making userdata again (fastboot -w)"
 			fb -w >/dev/null || { echo "$FB_OUT" >&2; die "fastboot -w failed"; }
 			printf '%s\n' "$FB_OUT" | grep -q "Writing 'userdata'" || { echo "$FB_OUT" >&2; die "fastboot -w did not format userdata"; }
+			rm -f "$BK/unwipe-pending"
 		fi
 	fi
 fi

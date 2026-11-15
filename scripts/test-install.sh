@@ -106,4 +106,34 @@ check "the table as it was (both copies)" 'cmp -s "$FAKE/head.bin" "$SAVED/gpt-h
 check "userdata made again at its whole size" '[ "$(st wiped)" = 2 ] && [ "$(st wiped_userdata)" = "[1601344, 30437370]" ]'
 check "slot b as it was, slot a active, Android booted" '( for p in boot_b dtbo_b vbmeta_b; do cmp -s "$FAKE/parts/$p.img" "$T/parts.orig/$p.img" || exit 1; done ) && [ "$(st slot)" = a ] && [ "$(st mode)" = android ]'
 check "every fastboot write after a gptwrite came after a restart" '! awk "/gptwrite/{w=1} /: (boot|reboot)/{w=0} w && /oem (darwinput|readpart|darwininfo)/{bad=1} END{exit !bad}" "$FAKE/calls.txt"'
+st_flag() { python3 - "$1" "$2" <<EOF
+import json, sys; s=json.load(open('$FAKE/state.json')); s['mode']='abl'; s[sys.argv[1]]=json.loads(sys.argv[2]); json.dump(s, open('$FAKE/state.json','w'))
+EOF
+}
+same_copies() { python3 "$KREPO/tools/gpt-plan.py" info "$FAKE/head.bin" "$FAKE/tail.bin" | grep -q "^primary: checks; backup: checks; the same;"; }
+
+echo "== install cut short: the table half written, then fastboot -w failing"
+st_flag fail_backup_write true; st_flag fail_wipe 1
+ERASE_ANDROID_DATA=yes "$B/install.sh" > "$T/out7.txt" 2>&1 && R=0 || R=$?
+check "stopped; the primary new, the backup old" '[ $R -ne 0 ] && ! same_copies && table | grep -q "darwin=22048256"'
+st_flag mode '"abl"'
+ERASE_ANDROID_DATA=yes "$B/install.sh" > "$T/out8.txt" 2>&1 && R=0 || R=$?
+check "run again: mended, then stopped at the failing -w (wipe-pending kept)" '[ $R -ne 0 ] && same_copies && grep -q "making them one" "$T/out8.txt" && [ -f "$BACKUPS/b1289b47/wipe-pending" ]'
+st_flag mode '"abl"'
+ERASE_ANDROID_DATA=yes "$B/install.sh" > "$T/out9.txt" 2>&1 || { cat "$T/out9.txt"; exit 1; }
+check "run again: userdata made again at its new size, and the install done" 'grep -q "last run stopped" "$T/out9.txt" && [ "$(st wiped_userdata)" = "[1601344, 22048255]" ] && [ ! -f "$BACKUPS/b1289b47/wipe-pending" ] && [ "$(st slot)" = b ] && [ "$(st mode)" = ios ]'
+
+echo "== uninstall cut short: the table half put back"
+st_flag fail_backup_write true
+REMOVE=yes "$B/uninstall.sh" > "$T/out10.txt" 2>&1 && R=0 || R=$?
+check "stopped, the copies differ" '[ $R -ne 0 ] && ! same_copies'
+w=$(st wiped); st_flag mode '"abl"'
+REMOVE=yes "$B/uninstall.sh" > "$T/out11.txt" 2>&1 || { cat "$T/out11.txt"; exit 1; }
+check "run again: mended, userdata made again, the table as it was" 'cmp -s "$FAKE/head.bin" "$SAVED/gpt-head.orig.bin" && cmp -s "$FAKE/tail.bin" "$SAVED/gpt-tail.orig.bin" && [ "$(st wiped)" = $((w + 1)) ] && [ ! -f "$BACKUPS/b1289b47/unwipe-pending" ] && [ "$(st slot)" = a ]'
+
+echo "== Android updated into HakiOS's old slot: install refuses"
+st_flag slot '"b"'; before=$(shasum "$FAKE/parts/boot_b.img")
+"$B/install.sh" > "$T/out12.txt" 2>&1 < /dev/null && R=0 || R=$?
+check "refused, boot_b (Android) untouched" '[ $R -ne 0 ] && grep -q "holds no HakiOS" "$T/out12.txt" && [ "$before" = "$(shasum "$FAKE/parts/boot_b.img")" ]'
+
 [ -z "$FAILED" ] && echo "all as expected" || { echo "SOME FAILED (calls: $FAKE/calls.txt)"; trap - EXIT; exit 1; }

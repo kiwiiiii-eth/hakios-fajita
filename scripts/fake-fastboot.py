@@ -114,6 +114,12 @@ def main(a):
             save(s)
             return okay()
         if cmd == '-w':
+            if s.get('fail_wipe', 0) > 0:          # a failure the test asks for
+                s['fail_wipe'] -= 1
+                save(s)
+                print("Erasing 'userdata' FAILED (remote: 'Partition flashing is not allowed')\nfastboot: error: Command failed",
+                      file=sys.stderr)
+                return 1
             s['wiped'] = s.get('wiped', 0) + 1
             s['wiped_userdata'] = s['abl_userdata']
             save(s)
@@ -191,6 +197,11 @@ def main(a):
         t2[(be_lba - (disk - 8)) * BS:(be_lba - (disk - 8)) * BS + len(ne)] = ne
         t2[7 * BS:] = b
         open(path('head.bin'), 'wb').write(bytes(h2))
+        if s.get('fail_backup_write'):              # a write cut short the test asks for: the primary new, the backup old
+            s['fail_backup_write'] = False
+            s['gpt_written'] = True
+            save(s)
+            return fail('the backup did not read back the same (see oem log)')
         open(path('tail.bin'), 'wb').write(bytes(t2))
         s['gpt_written'] = True
         s['resident'] = None

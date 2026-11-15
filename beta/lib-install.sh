@@ -83,14 +83,37 @@ read_gpt() {
 	read_twice "$1/tail.bin" oem readunit "$UNIT" $((BLOCKS - 8)) 8
 }
 
-# gpt-plan.py's TABLE line for the table in $1/head.bin and $1/tail.bin: UD_FIRST UD_LAST DW (F..L or none)
+# gpt-plan.py's TABLE line for the table in $1/head.bin and $1/tail.bin: UD_FIRST UD_LAST DW (F..L or none), and
+# COPIES: "same" when both copies check and hold the same entries
 table_of() {
-	local line
-	line=$(python3 "$GPTPLAN" info "$1/head.bin" "$1/tail.bin" | tee -a "${LOG:-/dev/null}" | grep '^TABLE ') ||
-		die "the phone's partition table does not check (see the log)"
+	local line info
+	info=$(python3 "$GPTPLAN" info "$1/head.bin" "$1/tail.bin") || true
+	printf '%s\n' "$info" >> "${LOG:-/dev/null}"
+	line=$(printf '%s\n' "$info" | grep '^TABLE ') || die "the phone's partition table does not check (see the log)"
+	COPIES=other
+	printf '%s\n' "$info" | grep -q '^primary: checks; backup: checks; the same;' && COPIES=same
 	UD_FIRST=$(echo "$line" | sed -n 's/.*userdata=\([0-9]*\)\.\.\([0-9]*\).*/\1/p')
 	UD_LAST=$(echo "$line" | sed -n 's/.*userdata=\([0-9]*\)\.\.\([0-9]*\).*/\2/p')
 	DW=$(echo "$line" | sed -n 's/.* darwin=\([^ ]*\).*/\1/p')
+}
+
+# the two copies of the table made one again (a write that was cut short: one new, one old, or one that does not
+# check), then the phone restarted so that ABL and the loader see it, and the table read again into $1
+mend_gpt() {
+	local rc
+	say "the two copies of the partition table differ (a write was cut short): making them one"
+	python3 "$GPTPLAN" mend "$1/head.bin" "$1/tail.bin" "$1/mend.stg" >> "$LOG" 2>&1 || die "the table cannot be mended (see the log)"
+	fbq oem ramdisk >/dev/null || die "the loader would not take the table ($FB_OUT)"
+	fb stage "$1/mend.stg" >/dev/null || die "sending the table failed"
+	fbq oem gptcheck >/dev/null || die "the loader refuses the mended table: $FB_OUT"
+	rc=0; fb oem gptwrite >/dev/null || rc=$?
+	[ $rc -eq 0 ] && printf '%s\n' "$FB_OUT" | grep -q "written\|already" || die "mending the table failed: $FB_OUT"
+	to_abl
+	to_loader
+	read_gpt "$1"
+	table_of "$1"
+	[ "$COPIES" = same ] || die "the two copies still differ after mending"
+	say "   mended"
 }
 
 # a partition read whole, twice, into $1/NAME.img
