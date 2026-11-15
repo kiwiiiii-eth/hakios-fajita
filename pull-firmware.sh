@@ -98,6 +98,22 @@ if [ -z "${NO_LINUX_FIRMWARE:-}" ]; then
 fi
 
 echo "pull-firmware.sh: fw-gpu $(ls fw-gpu | wc -l | tr -d ' ') files, fw-modem $(find fw-modem -type f | wc -l | tr -d ' '), fw-bt $(ls fw-bt | wc -l | tr -d ' ')"
+# the cameras' module files (drivers/camera/hakios.camera845.c's sensor tables, cam=N; userland/build.sh makes them into
+# camera-<sensor>.tab): /vendor/lib*/camera/com.qti.sensormodule.*.bin, readable by adb's shell user. Optional.
+mkdir -p "$STAGE/camera"
+for d in /vendor/lib64/camera /vendor/lib/camera; do
+	for f in $(adb shell "ls $d/com.qti.sensormodule.*.bin" 2>/dev/null | tr -d '\r'); do
+		adb pull "$f" "$STAGE/camera/" >/dev/null 2>&1 || true
+	done
+done
+if ls "$STAGE"/camera/com.qti.sensormodule.*.bin >/dev/null 2>&1; then
+	rm -rf fw-camera
+	mkdir -p fw-camera
+	cp "$STAGE"/camera/com.qti.sensormodule.*.bin fw-camera/
+	echo "pull-firmware.sh: fw-camera $(ls fw-camera | wc -l | tr -d ' ') module files (the cameras' sensor tables)"
+else
+	echo "pull-firmware.sh: no camera module files on the phone (/vendor/lib*/camera): the cameras (cam=N) have no tables" >&2
+fi
 # against the firmware this release was tested with (their hashes only, firmware.sha256): a difference may still work
 if [ -f "$HERE/firmware.sha256" ]; then
 	if shasum -a 256 -c "$HERE/firmware.sha256" >/dev/null 2>&1; then
