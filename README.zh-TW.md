@@ -63,7 +63,7 @@ ABL（原廠 bootloader）── fastboot boot ──▶ U-Boot ── hakios lo
 ```
 
 **會寫入手機的東西**：從 Mac 開機時，只有一個 PMIC 暫存器（重開原因 `0x88f`，讓重開後停在 fastboot），不寫任何分區。
-安裝時，經你在 `install.sh` 確認、並先備份所有會改的東西（`uninstall.sh` 可還原）：LUN 0 的分區表（userdata 縮短，最後 32 GiB 切成 `darwin`，
+安裝時，經你在 `install.sh` 確認、並先備份所有會改的東西（`uninstall.sh` 可還原）：LUN 0 的分區表（userdata 縮短，最後 32 GiB 切成 `darwin`（預設；可用 `GIB=` 設 20～64），
 **會清除 Android 資料**；只准改這兩個 entry，loader 會對照兩份副本檢查並讀回）、`darwin` 本身（系統映像、資料磁碟區）、HakiOS 那個 slot 的
 boot 分區（dtbo、vbmeta 改用 Android 那個 slot 的）、以及該 slot 的 A/B 屬性（標記開機成功）。兩種方式下系統執行時，會寫充電器的輸入與充電電流上限、
 閃光燈和震動模組；每一項都限定在暫存器白名單內，寫完都會讀回比對。`persist`、`modemst*`、`fsg`、`xbl`、`abl`、`tz` 完全不碰。

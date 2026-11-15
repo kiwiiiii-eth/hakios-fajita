@@ -70,7 +70,7 @@ power ─▶ ABL ─▶ boot_X: U-Boot ─▶ HakiOS loader ── the system im
 
 **What is written to the phone.** From a Mac: one PMIC register (the reboot reason `0x88f`, so a reset lands in
 fastboot), and no partition. Installed, with your consent in `install.sh`, after a backup of everything it changes
-(`uninstall.sh` puts it back): LUN 0's partition table (userdata shortened, a partition `darwin` of its last 32 GiB:
+(`uninstall.sh` puts it back): LUN 0's partition table (userdata shortened, a partition `darwin` of its last 32 GiB by default, 20 to 64 with `GIB=`:
 **Android's data is erased**; only those two entries may change, checked by the loader against both copies and read
 back), `darwin` itself (the system image, the data volume), the boot partition of HakiOS's slot with that slot's dtbo
 and vbmeta taken from Android's, and that slot's A/B attributes (marked successful). Either way, while the system runs:

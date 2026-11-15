@@ -168,13 +168,14 @@ fi
 # /private/var's store into it. The system image's header and both var_store slots' headers must read the same after.
 DW_FIRST=${DW%..*}; DW_LAST=${DW#*..}; DW_BLOCKS=$((DW_LAST - DW_FIRST + 1))
 to_loader
-read_twice "$T/vol.bin" oem readunit "$UNIT" $((DW_FIRST + DATA_FIRST)) 1
-if [ -z "${FRESH_DARWIN:-}" ] && { [ "$(dd if="$T/vol.bin" bs=1 skip=1024 count=2 2>/dev/null)" = HX ] ||
+if [ $(( DW_BLOCKS - DATA_FIRST )) -lt 1048576 ]; then
+	# a darwin carved by Beta 0.4 with GIB under 16: no room past the system image and the store for a volume of 4 GiB
+	# (asked before anything is read there: its 12 GiB may lie past darwin's end)
+	say "2b. darwin ($(( DW_BLOCKS * 4096 / 1073741824 )) GiB) is too small for a data volume: /private/var stays kept as Beta 0.4 keeps it (./uninstall.sh, then ./install.sh with GIB=32, makes room)"
+elif read_twice "$T/vol.bin" oem readunit "$UNIT" $((DW_FIRST + DATA_FIRST)) 1 &&
+   [ -z "${FRESH_DARWIN:-}" ] && { [ "$(dd if="$T/vol.bin" bs=1 skip=1024 count=2 2>/dev/null)" = HX ] ||
    [ "$(dd if="$T/vol.bin" bs=1 skip=1024 count=2 2>/dev/null)" = H+ ]; }; then
 	say "2b. the data volume is there already: left as it is"
-elif [ $(( DW_BLOCKS - DATA_FIRST )) -lt 1048576 ]; then
-	# a darwin carved by Beta 0.4 with GIB under 16: no room past the system image and the store for a volume of 4 GiB
-	say "2b. darwin ($(( DW_BLOCKS * 4096 / 1073741824 )) GiB) is too small for a data volume: /private/var stays kept as Beta 0.4 keeps it (./uninstall.sh, then ./install.sh with GIB=32, makes room)"
 else
 	say "2b. making the data volume for /private/var ($(( (DW_BLOCKS - DATA_FIRST) * 4096 / 1073741824 )) GiB of darwin, empty)"
 	python3 "$K/tools/mkdatavol.py" "$T/data.simg" --first $DATA_FIRST --darwin $DW_BLOCKS >> "$LOG" 2>&1 ||
