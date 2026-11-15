@@ -149,15 +149,47 @@ on), or ./uninstall.sh. The table from before is in $BK (gpt-head.bin, gpt-tail.
 	# ABL reads the table when it starts: only then does it know userdata's new size
 	wipe_userdata "$(cat "$BK/wipe-pending")"
 	DW=$NEW_DW
+	FRESH_DARWIN=1          # a new darwin: whatever an earlier one left in its blocks is not this phone's data volume
 elif [ -f "$BK/wipe-pending" ]; then
 	say "2. the last run stopped after the new partition table, before userdata was made again: doing that now"
 	if [ "${ERASE_ANDROID_DATA:-}" = yes ]; then answer=ERASE; else read -r -p "    Android's data is erased (it is not usable as it is). Type ERASE to go on: " answer; fi
 	[ "$answer" = ERASE ] || die "nothing was changed (Android cannot use its data until ./install.sh makes userdata again)"
 	wipe_userdata "$(cat "$BK/wipe-pending")"
+	FRESH_DARWIN=1          # the rest of a carve a run did not finish: its data volume is still to be made
 else
 	first=${DW%..*}; last=${DW#*..}
 	[ $(( (last - first + 1) * 4096 )) -ge $((12 * 1073741824)) ] || die "the phone's darwin ($DW) is smaller than 12 GiB"
 	say "2. darwin is there already ($DW): nothing erased"
+fi
+
+# --- 2b. the data volume (Beta 0.5): /private/var, HFS Plus in darwin from 12 GiB --------------------------------------
+# Made once, empty (tools/mkdatavol.py, 50 KB: everything outside it DONT_CARE), flashed by ABL; the first start moves
+# /private/var's store into it. The system image's header and both var_store slots' headers must read the same after.
+DW_FIRST=${DW%..*}; DW_LAST=${DW#*..}; DW_BLOCKS=$((DW_LAST - DW_FIRST + 1))
+to_loader
+read_twice "$T/vol.bin" oem readunit "$UNIT" $((DW_FIRST + DATA_FIRST)) 1
+if [ -z "${FRESH_DARWIN:-}" ] && { [ "$(dd if="$T/vol.bin" bs=1 skip=1024 count=2 2>/dev/null)" = HX ] ||
+   [ "$(dd if="$T/vol.bin" bs=1 skip=1024 count=2 2>/dev/null)" = H+ ]; }; then
+	say "2b. the data volume is there already: left as it is"
+else
+	say "2b. making the data volume for /private/var ($(( (DW_BLOCKS - DATA_FIRST) * 4096 / 1073741824 )) GiB of darwin, empty)"
+	python3 "$K/tools/mkdatavol.py" "$T/data.simg" --first $DATA_FIRST --darwin $DW_BLOCKS >> "$LOG" 2>&1 ||
+		die "the data volume's image was not made (see the log)"
+	for b in 0 $VAR_SLOTS_AT $((VAR_SLOTS_AT + VAR_SLOT_BLOCKS)); do
+		read_twice "$T/before-$b.bin" oem readunit "$UNIT" $((DW_FIRST + b)) 1
+	done
+	to_abl
+	have=$(getvar partition-size:darwin)
+	[ -n "$have" ] && [ $((have)) -eq $((DW_BLOCKS * 4096)) ] || die "ABL gives darwin $have bytes, not $((DW_BLOCKS * 4096)): nothing flashed"
+	fb flash darwin "$T/data.simg" >/dev/null || { echo "$FB_OUT" >&2; die "flashing the data volume failed"; }
+	to_loader
+	for b in 0 $VAR_SLOTS_AT $((VAR_SLOTS_AT + VAR_SLOT_BLOCKS)); do
+		read_twice "$T/after-$b.bin" oem readunit "$UNIT" $((DW_FIRST + b)) 1
+		cmp -s "$T/before-$b.bin" "$T/after-$b.bin" || die "darwin's block $b changed when the data volume was flashed"
+	done
+	read_twice "$T/vol.bin" oem readunit "$UNIT" $((DW_FIRST + DATA_FIRST)) 1
+	[ "$(dd if="$T/vol.bin" bs=1 skip=1024 count=2 2>/dev/null)" = HX ] || die "no HFS Plus volume where it was flashed"
+	say "   made; the system image and /private/var's store left as they were"
 fi
 
 # --- 3. the system image ----------------------------------------------------------------------------------------------

@@ -59,6 +59,45 @@ def table(head, tail):
     return gp.rng(gp.entry(h, e, ud)), (gp.rng(gp.entry(h, e, dw)) if dw >= 0 else None), disk
 
 
+def block_path(lba):
+    return path(f'blocks/{lba}.bin')
+
+
+def read_block(s, lba):
+    """a block of LUN 0 outside the table's ends: what was written there, a FILL's word, or zeros"""
+    if os.path.exists(block_path(lba)):
+        return open(block_path(lba), 'rb').read()
+    for first, last, word in s.get('fills', []):
+        if first <= lba <= last:
+            return bytes.fromhex(word) * (BS // 4)
+    return bytes(BS)
+
+
+def write_block(lba, data):
+    os.makedirs(path('blocks'), exist_ok=True)
+    open(block_path(lba), 'wb').write(data)
+
+
+def flash_sparse(s, simg, first_lba, part_blocks):
+    """an Android sparse image into a partition from first_lba: RAW and FILL written, DONT_CARE left as it is"""
+    b = open(simg, 'rb').read()
+    magic, _, _, fh, _, bs, total, n, _ = struct.unpack_from('<IHHHHIIII', b, 0)
+    if magic != 0xED26FF3A or bs != BS or total != part_blocks:
+        return False
+    at, pos = fh, 0
+    for _ in range(n):
+        kind, _, blocks, size = struct.unpack_from('<HHII', b, at)
+        if kind == 0xCAC1:
+            for i in range(blocks):
+                write_block(first_lba + pos + i, b[at + 12 + i * BS:at + 12 + (i + 1) * BS])
+        elif kind == 0xCAC2:
+            s.setdefault('fills', []).append([first_lba + pos, first_lba + pos + blocks - 1, b[at + 12:at + 16].hex()])
+        pos += blocks
+        at += size
+    s['darwin_flashed'] = s.get('darwin_flashed', 0) + 1
+    return pos == total
+
+
 def main(a):
     s = load()
     open(path('calls.txt'), 'a').write(f'{s["mode"]}: {" ".join(a)}\n')
@@ -79,8 +118,10 @@ def main(a):
             v = {'version': '0.5', 'product': 'xnuloader'}.get(a[1], '')
         else:
             ud = s['abl_userdata']
+            dw = table(head, tail)[1]
             v = {'unlocked': 'yes', 'current-slot': s['slot'], 'partition-type:userdata': 'f2fs',
-                 'partition-size:userdata': hex((ud[1] - ud[0] + 1) * BS)}.get(a[1], '')
+                 'partition-size:userdata': hex((ud[1] - ud[0] + 1) * BS),
+                 'partition-size:darwin': hex((dw[1] - dw[0] + 1) * BS) if dw else ''}.get(a[1], '')
         print(f'{a[1]}: {v}\nFinished. Total time: 0.001s', file=sys.stderr)
         return 0
     if cmd == 'reboot':
@@ -98,6 +139,13 @@ def main(a):
                      uefi_darwin=table(head, tail)[1] is not None)
             save(s)
             return okay()
+        if cmd == 'flash' and a[1] == 'darwin':
+            dw = table(head, tail)[1]
+            if not dw or not flash_sparse(s, a[2], dw[0], dw[1] - dw[0] + 1):
+                return fail('not a sparse image of darwin')
+            save(s)
+            print("Sending sparse 'darwin' 1/1 OKAY\nWriting 'darwin' OKAY\nFinished.", file=sys.stderr)
+            return 0
         if cmd == 'flash':
             # a partition is larger than what is flashed into it: what lay past the image stays (as on the phone)
             new, dst = open(a[2], 'rb').read(), path(f'parts/{a[1]}.img')
@@ -157,9 +205,11 @@ def main(a):
         _, _, disk = table(head, tail)
         if s['resident']:
             return fail('a root image is in the resident area')
-        blob = head if lba == 0 else tail if lba == disk - 8 else None
-        if blob is None or n != 8:
-            return fail('this fake keeps the first and last 8 blocks only')
+        blob = head if lba == 0 and n == 8 else tail if lba == disk - 8 and n == 8 else None
+        if blob is None and n == 1:
+            blob = read_block(s, lba)
+        if blob is None:
+            return fail('this fake keeps the table\'s ends and single blocks only')
         open(path('staged.bin'), 'wb').write(blob)
         return okay()
     if o[0] == 'readpart':
@@ -215,6 +265,8 @@ def main(a):
         if not s['resident']:
             return fail('no root image staged')
         open(path('log.txt'), 'w').write(f'sysimg: {s["resident"]} bytes written and read back in 1 ms\n')
+        dw = table(head, tail)[1]
+        write_block(dw[0], b'HKSYSIMG' + bytes(BS - 8))      # the system image's header, darwin's block 0
         s['darwinput'] = s.get('darwinput', 0) + 1
         save(s)
         return okay()

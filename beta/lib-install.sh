@@ -12,6 +12,11 @@ D=$WORK/hakios-fajita
 USBIMG=${USBIMG:-$WORK/out/hakios-fajita-usb.img}
 BACKUPS=${BACKUPS:-$HOME/HakiOS-6T-backup}
 GPTPLAN=$K/tools/gpt-plan.py
+# darwin's layout, in blocks of 4096: the system image from its start (xnuloader/loader.c), /private/var's two var_store
+# slots at 8 GiB (userland/src/var_store.c), the data volume from 12 GiB (configs/fajita.config, CONFIG_UFS_DATA_FIRST)
+VAR_SLOTS_AT=2097152
+VAR_SLOT_BLOCKS=524288
+DATA_FIRST=3145728
 export PATH="$D/hostbin:$PATH"
 # HakiOS's boot image, as it lies in a boot partition: U-Boot is gzipped in it (pack-fajita.sh), but the container of
 # the loader's payload (HKUB, tools/mkubootimg.py) and the payload (XNUP, xnuloader/mkpayload.py) are not

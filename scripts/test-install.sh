@@ -33,7 +33,7 @@ chmod +x "$T/bin/fastboot" "$T/bin/adb"
 head -c 3000000 /dev/zero > "$W/hakios-xnu-kernel/userland/system.apfs"
 : > "$W/hakios-xnu-kernel/userland/root.apfs"
 printf 'loader with oem gptwrite\n' > "$W/hakios-xnu-kernel/xnuloader/loader.efi"
-cp "$KREPO/tools/gpt-plan.py" "$W/hakios-xnu-kernel/tools/"
+cp "$KREPO/tools/gpt-plan.py" "$KREPO/tools/mkdatavol.py" "$W/hakios-xnu-kernel/tools/"
 : > "$W/out/hakios-fajita-usb.img"
 cat > "$W/hakios-fajita/scripts/mk-installimg.sh" <<'EOF'
 #!/bin/bash
@@ -53,6 +53,8 @@ ERASE_ANDROID_DATA=yes "$B/install.sh" > "$T/out1.txt" 2>&1 || { cat "$T/out1.tx
 check "darwin carved: 22048256..30437370" '[ "$(table | sed -n "s/.*darwin=\([^ ]*\).*/\1/p")" = 22048256..30437370 ]'
 check "userdata made again once, at its new size" '[ "$(st wiped)" = 1 ] && [ "$(st wiped_userdata)" = "[1601344, 22048255]" ]'
 check "the system image written once" '[ "$(st darwinput)" = 1 ]'
+check "the data volume made once, HFS Plus at darwin + 12 GiB" '[ "$(st darwin_flashed)" = 1 ] && [ "$(dd if="$FAKE/blocks/$((22048256 + 3145728)).bin" bs=1 skip=1024 count=2 2>/dev/null)" = HX ]'
+check "nothing written before 12 GiB of darwin by it (no block there but the system image header)" '[ -z "$(cd "$FAKE/blocks" && ls | awk -F. "\$1 >= 22048256 && \$1 < 22048256 + 3145728 && \$1 != 22048256")" ]'
 check "slot b active, HakiOS in boot_b" '[ "$(st slot)" = b ] && grep -a -q "HKUB" "$FAKE/parts/boot_b.img"'
 check "dtbo_b now slot a's" 'cmp -s "$FAKE/parts/dtbo_b.img" "$FAKE/parts/dtbo_a.img"'
 check "slot a untouched" 'cmp -s "$FAKE/parts/boot_a.img" "$T/parts.orig/boot_a.img" && cmp -s "$FAKE/parts/dtbo_a.img" "$T/parts.orig/dtbo_a.img"'
@@ -72,6 +74,7 @@ check "slot b active, iOS booted" '[ "$(st slot)" = b ] && [ "$(st mode)" = ios 
 echo "== install again (an update)"
 st_set; "$B/install.sh" > "$T/out4.txt" 2>&1 < /dev/null || { cat "$T/out4.txt"; exit 1; }
 check "nothing erased, no question asked" '[ "$(st wiped)" = 1 ] && grep -q "darwin is there already" "$T/out4.txt"'
+check "the data volume not made again" '[ "$(st darwin_flashed)" = 1 ] && grep -q "data volume is there already" "$T/out4.txt"'
 check "the system image written again, into slot b" '[ "$(st darwinput)" = 2 ] && [ "$(st slot)" = b ]'
 check "the backup kept as it was" 'cmp -s "$BACKUPS/b1289b47/boot_b.img" "$T/parts.orig/boot_b.img"'
 check "the update went into slot b, Android's boot_a untouched" 'grep -q "goes into slot b" "$T/out4.txt" && cmp -s "$FAKE/parts/boot_a.img" "$T/parts.orig/boot_a.img"'
@@ -121,6 +124,7 @@ ERASE_ANDROID_DATA=yes "$B/install.sh" > "$T/out8.txt" 2>&1 && R=0 || R=$?
 check "run again: mended, then stopped at the failing -w (wipe-pending kept)" '[ $R -ne 0 ] && same_copies && grep -q "making them one" "$T/out8.txt" && [ -f "$BACKUPS/b1289b47/wipe-pending" ]'
 st_flag mode '"abl"'
 ERASE_ANDROID_DATA=yes "$B/install.sh" > "$T/out9.txt" 2>&1 || { cat "$T/out9.txt"; exit 1; }
+check "the carve finished by the third run made its data volume new" '[ "$(st darwin_flashed)" = 2 ]'
 check "run again: userdata made again at its new size, and the install done" 'grep -q "last run stopped" "$T/out9.txt" && [ "$(st wiped_userdata)" = "[1601344, 22048255]" ] && [ ! -f "$BACKUPS/b1289b47/wipe-pending" ] && [ "$(st slot)" = b ] && [ "$(st mode)" = ios ]'
 
 echo "== uninstall cut short: the table half put back"
@@ -139,6 +143,7 @@ check "refused, boot_b (Android) untouched" '[ $R -ne 0 ] && grep -q "holds no H
 echo "== as the refusal says: TARGET=a, then an ordinary update, switching, uninstalling"
 st_flag mode '"abl"'
 TARGET=a ERASE_ANDROID_DATA=yes "$B/install.sh" > "$T/out13.txt" 2>&1 < /dev/null || { cat "$T/out13.txt"; exit 1; }
+check "darwin carved again: its data volume made new, not the one an earlier darwin left" '[ "$(st darwin_flashed)" = 3 ]'
 check "HakiOS into slot a, remembered; Android's boot_b untouched" '[ "$(st slot)" = a ] && [ "$(cat "$BACKUPS/b1289b47/slot")" = a ] && [ "$before" = "$(shasum "$FAKE/parts/boot_b.img")" ]'
 st_flag mode '"abl"'
 "$B/install.sh" > "$T/out14.txt" 2>&1 < /dev/null || { cat "$T/out14.txt"; exit 1; }
