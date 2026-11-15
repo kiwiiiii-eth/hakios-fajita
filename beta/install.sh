@@ -6,6 +6,9 @@
 #                                volume for /private/var is what is past its first 12 GiB (8 to 52 GiB)
 #   TARGET=a|b ./install.sh      the slot to install into (by default the one HakiOS is in already, else the one
 #                                Android is not using)
+#   ISLAND=1 ./install.sh        the Dynamic Island: SpringBoard takes the phone for one with an island (an iPhone 14
+#                                Pro's top), the notch-like pill at the top of the screen; ISLAND=0 (or none) the
+#                                iPhone X's notch as before. Run again with the other to change it (steps 3 and 4)
 #
 # What it does, saying each step before it; the ones that change the phone are marked *:
 #   1.  the phone's partition table and boot, dtbo and vbmeta of both slots, read twice, are kept the first time in
@@ -211,7 +214,9 @@ say "   written and read back"
 
 # --- 4. the boot image, and the slot ----------------------------------------------------------------------------------
 say "4. the boot image"
-HAKIOS_ROOT=$WORK "$D/scripts/mk-installimg.sh" >> "$LOG" 2>&1 || die "the boot image was not made (see the log)"
+[ "${ISLAND:-0}" = 1 ] && say "   with the Dynamic Island (ISLAND=1)"
+HAKIOS_ROOT=$WORK EXTRA="${EXTRA:+$EXTRA }$([ "${ISLAND:-0}" = 1 ] && echo island=1)" "$D/scripts/mk-installimg.sh" >> "$LOG" 2>&1 ||
+	die "the boot image was not made (see the log)"
 IMG=$WORK/out/hakios-fajita-install.img
 to_abl
 for p in dtbo vbmeta; do
