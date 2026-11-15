@@ -69,7 +69,7 @@ echo
 [ "$(dd if="$T/vendor.img" bs=1 skip=1080 count=2 2>/dev/null | xxd -p)" = 53ef ] || die "vendor_$SLOT is not an ext4 file system"
 mkdir -p "$T/camera"
 for dir in /lib64/camera /lib/camera; do
-	for f in $("$DEBUGFS" -R "ls -p $dir" "$T/vendor.img" 2>/dev/null | awk -F/ '$6 ~ /^com\.qti\.sensormodule\..*\.bin$/ {print $6}'); do
+	for f in $("$DEBUGFS" -R "ls -p $dir" "$T/vendor.img" 2>/dev/null | awk -F/ '$6 ~ /^com\.qti\.(sensormodule\..*|tuned\.[a-z]+_[a-z0-9]+)\.bin$/ {print $6}'); do
 		"$DEBUGFS" -R "dump $dir/$f $T/camera/$f" "$T/vendor.img" >/dev/null 2>&1 || true
 	done
 done
@@ -77,6 +77,7 @@ ls "$T"/camera/com.qti.sensormodule.*.bin >/dev/null 2>&1 || die "no com.qti.sen
 rm -rf "$OUT"
 mkdir -p "$OUT"
 cp "$T"/camera/com.qti.sensormodule.*.bin "$OUT/"
+cp "$T"/camera/com.qti.tuned.*.bin "$OUT/" 2>/dev/null || true       # (the colour tuning: tools/camtuning.py)
 for f in "$OUT"/*.bin; do
 	python3 "$K/tools/camsensor.py" "$f" - 2>&1 | head -1
 done

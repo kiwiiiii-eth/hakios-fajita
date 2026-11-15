@@ -102,7 +102,9 @@ echo "pull-firmware.sh: fw-gpu $(ls fw-gpu | wc -l | tr -d ' ') files, fw-modem 
 # camera-<sensor>.tab): /vendor/lib*/camera/com.qti.sensormodule.*.bin, readable by adb's shell user. Optional.
 mkdir -p "$STAGE/camera"
 for d in /vendor/lib64/camera /vendor/lib/camera; do
-	for f in $(adb shell "ls $d/com.qti.sensormodule.*.bin" 2>/dev/null | tr -d '\r'); do
+	# (and the cameras' colour tuning, com.qti.tuned.<maker>_<sensor>.bin: tools/camtuning.py makes camera-<sensor>.isp of it)
+	for f in $(adb shell "ls $d/com.qti.sensormodule.*.bin $d/com.qti.tuned.*.bin" 2>/dev/null | tr -d '\r'); do
+		case "$f" in *_fat*.bin|*tuned.default.bin) continue ;; esac
 		adb pull "$f" "$STAGE/camera/" >/dev/null 2>&1 || true
 	done
 done
@@ -110,6 +112,7 @@ if ls "$STAGE"/camera/com.qti.sensormodule.*.bin >/dev/null 2>&1; then
 	rm -rf fw-camera
 	mkdir -p fw-camera
 	cp "$STAGE"/camera/com.qti.sensormodule.*.bin fw-camera/
+	cp "$STAGE"/camera/com.qti.tuned.*.bin fw-camera/ 2>/dev/null || true
 	echo "pull-firmware.sh: fw-camera $(ls fw-camera | wc -l | tr -d ' ') module files (the cameras' sensor tables)"
 else
 	echo "pull-firmware.sh: no camera module files on the phone (/vendor/lib*/camera): the cameras (cam=N) have no tables" >&2
