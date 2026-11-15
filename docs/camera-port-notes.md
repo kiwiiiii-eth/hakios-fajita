@@ -109,3 +109,14 @@ camcc (mainline camcc-sdm845.c):
 - Colour: the module files say RGGB for all three; no colour matrix or lens shading yet (the 6T's `com.qti.tuned.*.bin`
   are an older format than `tools/camtuning.py` reads). The sensors are mounted rotated (roll 270 / 90 / 270): the
   pictures may need turning.
+
+## 2026-11-16: colour, focus, speed (r186-r199)
+
+| What | Where it stands |
+|---|---|
+| Colour | the 6T's own tuning (com.qti.tuned.semco_imx519 / oflim_imx371 / semco_imx376k, in fw-camera/) through tools/camtuning.py: colour matrices, lens shading, the white balance's reference lights; the white balance may stay 0.15 (in logarithms) off the reference line, which bends on this phone |
+| Front camera | the IMX371 is a Quad Bayer sensor: its whole array (4608x3456) is RRGG/RRGG/GGBB/GGBB, though its module file says RGGB (r189's raw frame), so only its binned 2304x1728 is used |
+| Focus | the developer's main module has an SA3103 (0x0C on CCI master 0; 0x81 = 1, the position in 0x82/0x83, 12 bits); the LC898217XC modules' (0x72, 0x84, 11 bits) are tried first. VAF: GPIO 31 (main), GPIO 77 (second). A sweep (camera_test raw ... focus) peaks at 320-352 of 0-1023 for a wall 2-3 m off; the module's EEPROM (0x0000 on) holds values of 370-720 in the same units |
+| Speed | the main camera's binned preview 29.9 frames a second (r199), its whole array (cam_full=1) about 20; photographs as JPEG (Settings, Camera, Formats, Most Compatible) 0.2 s to encode, HEVC 5 s |
+| OIS | not driven: BU24218GWL at 0x3E (module file's 0x7C), PM8998 L21 2.85 V and GPIO 40; its init is a 2580-byte program at 0x0000-0x1DBF after 0xF010 = 0, then 38 bytes of calibration at 0x1DC0-0x1DE5 and 0xF006 from the module's EEPROM -- where in the EEPROM is not in the module file (OnePlus's library): not written |
+
