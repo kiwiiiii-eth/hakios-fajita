@@ -3,6 +3,14 @@
 HakiOS for OnePlus 6T 的每一個版本。完整說明（含各版已知問題）在 [`releases/`](releases/) 與
 [Releases 頁面](https://github.com/kiwiiiii-eth/hakios-fajita/releases)。[English](CHANGELOG.md)
 
+## [0.6.1-beta] — 2026-11-16
+
+### 修正
+- **動態島**（`ISLAND=1`）原本被當成有 Home 鍵的機型：沒有手勢、舊式狀態列、島壓在圖示上。現在 loader 會給 `/buttons home-button-type` 2（MobileGestalt 的 HomeButtonType），`island=1` 也會回報 14 Pro 的螢幕（1179 x 2556，縮放到面板）。每種安裝都有 `/buttons`，瀏海版面也不再依賴舊快取。
+
+### 新增
+- `tel=1`（實驗中）：收到的簡訊寫進記錄，只讀不改；打電話需要 VoLTE，這裡還沒有。
+
 ## [0.6-beta] — 2026-11-16
 
 ### 新增

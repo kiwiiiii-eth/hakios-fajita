@@ -3,6 +3,17 @@
 Every release of HakiOS for the OnePlus 6T. The full notes, with the known issues of each, are in [`releases/`](releases/)
 and on the [releases page](https://github.com/kiwiiiii-eth/hakios-fajita/releases). [繁體中文](CHANGELOG.zh-TW.md)
 
+## [0.6.1-beta] — 2026-11-16
+
+### Fixed
+- **The Dynamic Island** (`ISLAND=1`) laid the phone out as one with a home button: no gestures, the old status bar,
+  the island over the icons. The loader now gives `/buttons home-button-type` 2 (MobileGestalt's HomeButtonType), and
+  `island=1` reports the 14 Pro's screen (1179 x 2556, scaled to the panel). Every install gets `/buttons`, so the
+  notch layout no longer depends on an old cache either.
+
+### Added
+- `tel=1` (experimental): incoming SMS written to the log, read only; calls need VoLTE, which does not run here.
+
 ## [0.6-beta] — 2026-11-16
 
 ### Added

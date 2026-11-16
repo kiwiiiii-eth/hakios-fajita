@@ -1,4 +1,4 @@
-# HakiOS on the OnePlus 6T — Beta 0.6 test kit
+# HakiOS on the OnePlus 6T — Beta 0.6.1 test kit
 
 The Darwin (XNU) kernel and the iOS 16.5 user space on a OnePlus 6T, two ways:
 
@@ -8,7 +8,7 @@ The Darwin (XNU) kernel and the iOS 16.5 user space on a OnePlus 6T, two ways:
   lives on a 20 GB volume of its own on the phone (new in 0.5: Settings shows the space, and a restart takes under a
   minute). Android stays in its own slot, a command away. **Installing erases Android's data** (see below).
 
-Release notes: https://github.com/kiwiiiii-eth/hakios-fajita/blob/main/releases/v0.6-beta.md
+Release notes: https://github.com/kiwiiiii-eth/hakios-fajita/blob/main/releases/v0.6.1-beta.md
 
 ## You need
 
@@ -101,7 +101,7 @@ because the user space believes it is one.
 
 # 繁體中文
 
-Darwin（XNU）核心＋iOS 16.5 使用者空間跑在 OnePlus 6T 上（Beta 0.6），兩種用法：
+Darwin（XNU）核心＋iOS 16.5 使用者空間跑在 OnePlus 6T 上（Beta 0.6.1），兩種用法：
 
 - **從 Mac 開機**（`./run.sh`，同以前）：透過 USB 開機，整套系統在記憶體裡，**不刷任何分區**，重開機就回到 Android。
 - **安裝到手機**（`./install.sh`）：按電源鍵就直接開進 iOS，不用 Mac、不用接線。資料存在手機上一個約 20 GB 的磁碟區（0.5 新增：設定裡看得到完整容量，重開不到 1 分鐘）。

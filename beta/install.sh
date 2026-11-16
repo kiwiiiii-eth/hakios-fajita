@@ -37,7 +37,7 @@ LC_ALL=C grep -a -q "oem gptwrite" "$K/xnuloader/loader.efi" || die "this loader
 command -v fastboot >/dev/null || die "no fastboot (brew install android-platform-tools)"
 [ "$GIB" -ge 20 ] && [ "$GIB" -le 64 ] 2>/dev/null || die "GIB is to be 20 to 64 (the data volume is what is past 12 GiB)"
 [ "$(fastboot devices | wc -l)" -le 1 ] || die "more than one phone in fastboot: leave one"
-if [ ! -d "$K/.git" ]; then export HAKIOS_VERSION_SUFFIX=${HAKIOS_VERSION_SUFFIX:--v0.6-beta}; fi
+if [ ! -d "$K/.git" ]; then export HAKIOS_VERSION_SUFFIX=${HAKIOS_VERSION_SUFFIX:--v0.6.1-beta}; fi
 T=$(mktemp -d); trap 'rm -rf "$T"' EXIT
 
 to_abl
