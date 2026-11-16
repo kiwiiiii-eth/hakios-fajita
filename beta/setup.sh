@@ -133,7 +133,7 @@ cp "$K/ssh/client_ed25519.pub" "$K/ssh/authorized_keys"
 
 # --- 8. the images ----------------------------------------------------------------------------------
 say "8/8 root.apfs and system.apfs (about 5 minutes)"
-(cd "$K" && PREBUILT=1 ALLOW=locationd BT=1 GL=1 REST=1 MODEM=1 SYSTEM=1 RC=rc.launchd.aks RC_JOBS=rc.jobs.ssh6t QUIET=1 userland/build.sh | tail -3)
+(cd "$K" && PREBUILT=1 LOCKDOWN=1 ALLOW="locationd lockdown" BT=1 GL=1 REST=1 MODEM=1 SYSTEM=1 RC=rc.launchd.aks RC_JOBS=rc.jobs.ssh6t QUIET=1 userland/build.sh | tail -3)
 [ -f "$K/userland/system.apfs" ] && [ -f "$K/userland/root.apfs" ] || die "the images were not made"
 
 say "done. Put the phone in fastboot (or leave it in Android) and run: ./run.sh (from the Mac) or ./install.sh (onto the phone)"
