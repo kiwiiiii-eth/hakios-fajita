@@ -9,6 +9,8 @@ booting on a Snapdragon 845 with its GPU, Wi‑Fi, LTE, sound and touch working.
 ![Device](https://img.shields.io/badge/device-OnePlus%206T%20(fajita)-555)
 ![iOS](https://img.shields.io/badge/iOS-16.5%20(20F66)-555)
 [![License](https://img.shields.io/badge/license-MIT-555)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/kiwiiiii-eth/hakios-fajita?color=e3b341)](https://github.com/kiwiiiii-eth/hakios-fajita/stargazers)
+[![Downloads](https://img.shields.io/github/downloads/kiwiiiii-eth/hakios-fajita/total?color=555)](https://github.com/kiwiiiii-eth/hakios-fajita/releases)
 
 [繁體中文](README.zh-TW.md) · [Release notes](releases/v0.6.1-beta.md) · [Changelog](CHANGELOG.md) · [Install guide](beta/README.md) · [Docs](#documentation)
 
@@ -135,6 +137,16 @@ and the data volume iOS writes to. Nothing else on the phone changes. More in [H
   guide says where it is), what you did and what you saw.
 - X: [@0x718_718](https://x.com/0x718_718)
 - Donations (BTC): `bc1p6n329lsup5kpyemsvhqen70h0a4nc2ujyxflza5tfw6a4j8r4afq47gf58`
+
+## Star history
+
+<a href="https://star-history.com/#kiwiiiii-eth/hakios-fajita&Date">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=kiwiiiii-eth/hakios-fajita&type=Date&theme=dark">
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=kiwiiiii-eth/hakios-fajita&type=Date">
+    <img alt="Star history of kiwiiiii-eth/hakios-fajita" src="https://api.star-history.com/svg?repos=kiwiiiii-eth/hakios-fajita&type=Date" width="600">
+  </picture>
+</a>
 
 ## Credits
 

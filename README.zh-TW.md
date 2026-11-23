@@ -9,6 +9,8 @@
 ![Device](https://img.shields.io/badge/device-OnePlus%206T%20(fajita)-555)
 ![iOS](https://img.shields.io/badge/iOS-16.5%20(20F66)-555)
 [![License](https://img.shields.io/badge/license-MIT-555)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/kiwiiiii-eth/hakios-fajita?color=e3b341)](https://github.com/kiwiiiii-eth/hakios-fajita/stargazers)
+[![Downloads](https://img.shields.io/github/downloads/kiwiiiii-eth/hakios-fajita/total?color=555)](https://github.com/kiwiiiii-eth/hakios-fajita/releases)
 
 [English](README.md) · [版本說明](releases/v0.6.1-beta.md#繁體中文) · [更新紀錄](CHANGELOG.zh-TW.md) · [安裝說明](beta/README.md#繁體中文) · [文件](#文件)
 
@@ -131,6 +133,16 @@ tar xzf hakios-6t-v0.6.1-beta.tar.gz && cd hakios-6t-v0.6.1-beta
 - 問題回報：[GitHub issues](https://github.com/kiwiiiii-eth/hakios-fajita/issues)，請附上記錄（位置見安裝說明）、你做了什麼、看到什麼。
 - X：[@0x718_718](https://x.com/0x718_718)
 - 捐款（BTC）：`bc1p6n329lsup5kpyemsvhqen70h0a4nc2ujyxflza5tfw6a4j8r4afq47gf58`
+
+## Star 走勢
+
+<a href="https://star-history.com/#kiwiiiii-eth/hakios-fajita&Date">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=kiwiiiii-eth/hakios-fajita&type=Date&theme=dark">
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=kiwiiiii-eth/hakios-fajita&type=Date">
+    <img alt="kiwiiiii-eth/hakios-fajita 的 Star 走勢圖" src="https://api.star-history.com/svg?repos=kiwiiiii-eth/hakios-fajita&type=Date" width="600">
+  </picture>
+</a>
 
 ## 致謝
 
