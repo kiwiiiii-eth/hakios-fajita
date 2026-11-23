@@ -3,6 +3,23 @@
 HakiOS for OnePlus 6T 的每一個版本。完整說明（含各版已知問題）在 [`releases/`](releases/) 與
 [Releases 頁面](https://github.com/kiwiiiii-eth/hakios-fajita/releases)。[English](CHANGELOG.md)
 
+## [0.7-beta] — 2026-11-23
+
+### 新增
+- **AirPods**：打開 AirPods 盒蓋時 iOS 跳出的卡片，現在有 AirPods 和「連線」，AirPods Pro 2 能配對、能聽。`mobileassetd` 會跑了（卡片的圖由它下載），核心對「資料夾的資料保護等級」回答 D（不保護）而不是「不支援」，下載的圖才解得開。
+- **由顯示控制器縮放、翻頁**（`fb_hw`，預設開；`fb_hw=0` 回到 CPU 縮放）：每一幀原樣複製進兩塊緩衝區之一，由控制器自己的縮放器（VIG0 的 QSEED3）縮成面板大小。開動態島、35 個手勢的自動滑動量測：晚於 16.7 ms 的幀 13% → 3～4%，晚於 33 ms 的 2% → 1%；複製 2 ms，原本 CPU 縮放要 8～11 ms；不再撕裂。
+
+### 改進
+- 藍牙晶片的連線改成 3.2 Mbit/s（原本 115200 bit/s，約 90 kbit/s 的資料量，AirPods 的串流要 256）：耳機不再破音、斷斷續續。`bt_baud=115200` 可改回。
+
+### 修正
+- **藍牙配對**重開機後會保留。系統共用容器的資料夾（藍牙、地圖、電池紀錄等）從 0.5 起使用者 `mobile` 都寫不進去，現在每次開機都會改回來。
+- **相機先占用音訊的 SMMU context 時，喇叭和麥克風全啞**（[#1](https://github.com/kiwiiiii-eth/hakios-fajita/issues/1)）。context 的暫存器是透過先前選到的那個 context 的對應讀的，遇到被占用的 context 也會直接放棄。由 @tre4surehunter9 回報、診斷並修好，他的修補原樣併入。
+- 約一半的開機喇叭沒聲音（兩個步驟之間被別的驅動拿走 SMMU context）。
+- 「設定 → 一般 → 關於」改的手機名稱會保留（`lockdownd` 會跑了）。
+- 「檔案」和 TrollStore 的選檔畫面能打開（它們的擴充功能已向 LaunchServices 註冊）。
+- 長時間使用、開很多檔案後的當機（`kern.maxvnodes` 提高到 65536）。
+
 ## [0.6.1-beta] — 2026-11-16
 
 ### 修正

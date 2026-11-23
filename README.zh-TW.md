@@ -12,7 +12,7 @@
 [![Stars](https://img.shields.io/github/stars/kiwiiiii-eth/hakios-fajita?color=e3b341)](https://github.com/kiwiiiii-eth/hakios-fajita/stargazers)
 [![Downloads](https://img.shields.io/github/downloads/kiwiiiii-eth/hakios-fajita/total?color=555)](https://github.com/kiwiiiii-eth/hakios-fajita/releases)
 
-[English](README.md) · [版本說明](releases/v0.6.1-beta.md#繁體中文) · [更新紀錄](CHANGELOG.zh-TW.md) · [安裝說明](beta/README.md#繁體中文) · [文件](#文件)
+[English](README.md) · [版本說明](releases/v0.7-beta.md#繁體中文) · [更新紀錄](CHANGELOG.zh-TW.md) · [安裝說明](beta/README.md#繁體中文) · [文件](#文件)
 
 <img src="docs/images/bootscreen-phones.png" width="620" alt="OnePlus 6T 上的 HakiOS 開機畫面：HakiOS 字樣、進度條、底部的開機資訊；旁邊是顯示 loader 記錄的除錯版">
 
@@ -50,7 +50,7 @@ Beta 0.5 安裝在 OnePlus 6T 上的實拍。
 
 ## 功能狀態
 
-2026 年 11 月在實機上確認的結果（Beta 0.6.1）。✅ 可用・🟡 部分可用・❌ 還不能用。
+2026 年 11 月在實機上確認的結果（Beta 0.7）。✅ 可用・🟡 部分可用・❌ 還不能用。
 每一項背後的驅動，以及跟上游參考機的比較：[硬體支援](docs/hardware.zh-TW.md)。
 
 | | 功能 | 狀態 | 說明 |
@@ -63,11 +63,11 @@ Beta 0.5 安裝在 OnePlus 6T 上的實拍。
 | **螢幕與輸入** | 觸控、實體按鍵 | ✅ | 每秒讀 120 次 |
 | | GPU | ✅ | Adreno 630、OpenGL ES 3.2（Mesa），最高 60 fps |
 | | 螢幕亮度 | ✅ | 設定與控制中心 |
-| | 滑動順暢度 | 🟡 | 每秒 55～60 幀，約一成的幀晚到 |
+| | 滑動順暢度 | 🟡 | 每秒 55～60 幀，約 25 幀有 1 幀晚到；由顯示控制器縮放、翻頁 |
 | **連線** | Wi‑Fi | ✅ | WPA2；5 GHz 約 100 Mbps；自動連回已知網路 |
 | | LTE 上網 | ✅ | 遠傳實測 |
 | | 打電話、簡訊 | ❌ | 目前只有數據 |
-| | 藍牙 | 🟡 | 能配對；BLE 鍵盤能打字；每次開機要重新配對 |
+| | 藍牙 | ✅ | 能配對並記住；BLE 鍵盤能打字；AirPods Pro 2 能從配對卡片連上並播放 |
 | | 定位（GPS） | 🟡 | 實驗中（`gnss=1`）：能追到衛星，Safari 拿得到位置 |
 | | USB 連電腦 | ❌ | 只有開機時 loader 的 fastboot |
 | **音訊** | 喇叭 | ✅ | 為保護喇叭，限制在 −20 dBFS |
@@ -83,11 +83,11 @@ Beta 0.5 安裝在 OnePlus 6T 上的實拍。
 
 需要：**已解鎖 bootloader 的 OnePlus 6T**（fajita）、裝好 [Homebrew](https://brew.sh) 的 **Mac**、自己下載的
 **iPhone X iOS 16.5 IPSW**（20F66），以及約 15 GB 空間。從[最新版本](https://github.com/kiwiiiii-eth/hakios-fajita/releases/latest)下載
-`hakios-6t-v0.6.1-beta.tar.gz`，然後：
+`hakios-6t-v0.7-beta.tar.gz`，然後：
 
 ```sh
 brew install python sevenzip zstd coreutils android-platform-tools
-tar xzf hakios-6t-v0.6.1-beta.tar.gz && cd hakios-6t-v0.6.1-beta
+tar xzf hakios-6t-v0.7-beta.tar.gz && cd hakios-6t-v0.7-beta
 ./setup.sh ~/Downloads/iPhone10,3,iPhone10,6_16.5_20F66_Restore.ipsw   # 只跑一次：抽手機韌體、解 IPSW
 ./run.sh        # 從 Mac 開機試用：不刷任何分區，重開就回 Android
 ./install.sh    # 或安裝到手機：之後按電源鍵直接進 iOS

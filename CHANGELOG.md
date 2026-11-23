@@ -3,6 +3,33 @@
 Every release of HakiOS for the OnePlus 6T. The full notes, with the known issues of each, are in [`releases/`](releases/)
 and on the [releases page](https://github.com/kiwiiiii-eth/hakios-fajita/releases). [繁體中文](CHANGELOG.zh-TW.md)
 
+## [0.7-beta] — 2026-11-23
+
+### Added
+- **AirPods**: the card that iOS shows when an AirPods case opens now has the AirPods and Connect, and the AirPods Pro 2
+  pair and play. `mobileassetd` runs (it fetches the card's pictures), and the kernel answers iOS's question about a
+  folder's data protection class (class D, no protection) instead of "not supported", so the pictures unzip.
+- **The display controller scales and flips** (`fb_hw`, on by default; `fb_hw=0` goes back to the CPU): each frame is
+  copied 1:1 into one of two buffers and the controller's own scaler (QSEED3 on VIG0) fits it to the panel. Scrolling,
+  measured on 35 gestures with the Dynamic Island: frames later than 16.7 ms 13% → 3–4%, later than 33 ms 2% → 1%; the
+  copy 2 ms instead of 8–11 for the CPU's scaling; no more tearing.
+
+### Changed
+- Bluetooth's link to the chip runs at 3.2 Mbit/s (it was 115200 bit/s, about 90 kbit/s of data: an AirPods stream is
+  256): no more clicks and drop-outs in the headphones. `bt_baud=115200` goes back.
+
+### Fixed
+- **Bluetooth pairings** are kept across restarts. The folders of the system's shared containers (Bluetooth's,
+  Maps', the battery history's and the others) were left unwritable for the user `mobile` since 0.5; they are given back at
+  every start.
+- **No sound and no microphone** when the camera took the audio's SMMU context first ([#1](https://github.com/kiwiiiii-eth/hakios-fajita/issues/1)). The context's registers
+  were read through a mapping of the context chosen before, and a context found in use stopped the search. Reported,
+  diagnosed and fixed by @tre4surehunter9; their patch is in as given.
+- The speaker stayed silent in about half of the starts (another driver took its SMMU context between two steps).
+- The phone's name set in Settings → General → About is kept (`lockdownd` runs).
+- Files and TrollStore's file picker open (their extensions are registered with LaunchServices).
+- A panic after long use with many files (`kern.maxvnodes` up to 65536).
+
 ## [0.6.1-beta] — 2026-11-16
 
 ### Fixed
