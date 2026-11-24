@@ -1,5 +1,5 @@
 #!/bin/bash
-# HakiOS on the OnePlus 6T, Beta 0.5: installed, so that the phone starts iOS by itself -- no Mac, no cable.
+# HakiOS on the OnePlus 6T, Beta 0.8: installed, so that the phone starts iOS by itself -- no Mac, no cable.
 #
 #   ./install.sh                 install; run again to update an install (steps 3 and 4 only: nothing is erased)
 #   GIB=32 ./install.sh          the size of the partition darwin when it is made (20 to 64; 32 by default): the data
@@ -37,7 +37,7 @@ LC_ALL=C grep -a -q "oem gptwrite" "$K/xnuloader/loader.efi" || die "this loader
 command -v fastboot >/dev/null || die "no fastboot (brew install android-platform-tools)"
 [ "$GIB" -ge 20 ] && [ "$GIB" -le 64 ] 2>/dev/null || die "GIB is to be 20 to 64 (the data volume is what is past 12 GiB)"
 [ "$(fastboot devices | wc -l)" -le 1 ] || die "more than one phone in fastboot: leave one"
-if [ ! -d "$K/.git" ]; then export HAKIOS_VERSION_SUFFIX=${HAKIOS_VERSION_SUFFIX:--v0.7.1-beta}; fi
+if [ ! -d "$K/.git" ]; then export HAKIOS_VERSION_SUFFIX=${HAKIOS_VERSION_SUFFIX:--v0.8-beta}; fi
 T=$(mktemp -d); trap 'rm -rf "$T"' EXIT
 
 to_abl
