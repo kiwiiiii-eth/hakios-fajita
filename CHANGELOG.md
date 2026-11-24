@@ -3,6 +3,20 @@
 Every release of HakiOS for the OnePlus 6T. The full notes, with the known issues of each, are in [`releases/`](releases/)
 and on the [releases page](https://github.com/kiwiiiii-eth/hakios-fajita/releases). [繁體中文](CHANGELOG.zh-TW.md)
 
+## [0.8-beta] — 2026-11-25
+
+### Added
+- **Cellular data through iOS itself**: CommCenter, iOS's cellular service, runs the modem (`bbdt=1`, `abb=1`,
+  `modem_native_pdp=1`, on by default). The kernel answers as iOS's baseband drivers would, bridges CommCenter's QMI to
+  the modem, and gives its data calls native `pdp_ip` interfaces; it opens no data session of its own any more.
+  Settings → Cellular is iOS's own page (the Cellular Data switch, a switch per app, the data used); IPv4 and IPv6.
+  **Tested only with FarEasTone (Taiwan)**; roaming not tested; it uses the data plan (see the release notes).
+- **Carrier bundles** from the IPSW are kept in the system image: CommCenter finds the SIM's carrier there (APNs, name).
+- Power + volume down held 1.2 s: iOS's "slide to power off". The volume indicator beside the 6T's volume buttons.
+  Location Services back in Settings → Privacy.
+- **Personal Hotspot, experimental**: an access point with DHCP and NAT out of the cellular interface. Devices join but
+  get no internet yet, and one that leaves may not join again until a restart.
+
 ## [0.7.1-beta] — 2026-11-24
 
 ### Fixed

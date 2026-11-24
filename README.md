@@ -67,7 +67,8 @@ The drivers behind each line, and how the 6T compares with upstream's phone: [Ha
 | | Brightness | ✅ | Settings and Control Center |
 | | Smooth scrolling | 🟡 | 55–60 fps, about one frame in 25 late; the display controller scales and flips |
 | **Connectivity** | Wi‑Fi | ✅ | WPA2; 5 GHz at about 100 Mbps; known networks rejoined |
-| | LTE data | ✅ | Tested on FarEasTone (Taiwan) |
+| | Cellular data | ✅ | iOS's own: Settings → Cellular, IPv4 and IPv6. Tested on FarEasTone (Taiwan) only |
+| | Personal Hotspot | ❌ | In Settings; devices join but get no internet yet |
 | | Phone calls, SMS | ❌ | Data only for now |
 | | Bluetooth | ✅ | Pairs and remembers; BLE keyboards type; AirPods Pro 2 connect from their card and play |
 | | Location (GPS) | 🟡 | Experimental (`gnss=1`): satellites tracked, Safari gets a position |

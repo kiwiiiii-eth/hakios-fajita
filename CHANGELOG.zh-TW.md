@@ -3,6 +3,14 @@
 HakiOS for OnePlus 6T 的每一個版本。完整說明（含各版已知問題）在 [`releases/`](releases/) 與
 [Releases 頁面](https://github.com/kiwiiiii-eth/hakios-fajita/releases)。[English](CHANGELOG.md)
 
+## [0.8-beta] — 2026-11-25
+
+### 新增
+- **行動數據由 iOS 自己管理**：iOS 的行動服務 CommCenter 直接控制數據機（`bbdt=1`、`abb=1`、`modem_native_pdp=1`，預設開啟）。核心扮演 iOS 的基頻驅動，把 CommCenter 的 QMI 轉給數據機，數據連線走原生的 `pdp_ip` 介面；核心不再自己開數據連線。「設定 → 行動服務」是 iOS 原本的頁面（行動數據開關、每個 App 的開關、用量），支援 IPv4 與 IPv6。**只在遠傳（台灣）實測過**；漫遊沒測；會用到數據流量（見版本說明）。
+- 系統映像保留 IPSW 裡的**電信商設定檔**：CommCenter 從這裡找到 SIM 卡的電信商（APN、名稱）。
+- 同時按住電源鍵和音量下鍵 1.2 秒：iOS 的「滑動來關機」。音量指示改到 6T 的音量鍵旁。「設定 → 隱私權」的定位服務回來了。
+- **個人熱點（實驗中）**：基地台加 DHCP 與從行動網路出去的 NAT。裝置連得上但還上不了網，離開後可能要重開機才連得回來。
+
 ## [0.7.1-beta] — 2026-11-24
 
 ### 修正
