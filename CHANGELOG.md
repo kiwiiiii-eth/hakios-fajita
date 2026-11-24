@@ -3,6 +3,18 @@
 Every release of HakiOS for the OnePlus 6T. The full notes, with the known issues of each, are in [`releases/`](releases/)
 and on the [releases page](https://github.com/kiwiiiii-eth/hakios-fajita/releases). [繁體中文](CHANGELOG.zh-TW.md)
 
+## [0.7.1-beta] — 2026-11-24
+
+### Fixed
+- **Every recording after the first of a start was silent** ([#2](https://github.com/kiwiiiii-eth/hakios-fajita/issues/2)):
+  the microphone's SLIMbus device keeps its logical address between two recordings, and the driver waited for a
+  handshake that only a new address brings, gave up, and after three tries the microphone was off until a restart. A
+  device that still has its address is used as it is. Reported by @tre4surehunter9.
+- A panic when the phone shut down or restarted while Wi‑Fi was scanning: the station's calls are drained and the
+  driver's timers stopped before the driver is taken down.
+- **Chinese** (Traditional, Hong Kong, Simplified) is kept in the system image: Settings → General → Language & Region
+  now switches iOS to Chinese (it changed nothing before, the languages' files being left out).
+
 ## [0.7-beta] — 2026-11-23
 
 ### Added

@@ -3,6 +3,13 @@
 HakiOS for OnePlus 6T 的每一個版本。完整說明（含各版已知問題）在 [`releases/`](releases/) 與
 [Releases 頁面](https://github.com/kiwiiiii-eth/hakios-fajita/releases)。[English](CHANGELOG.md)
 
+## [0.7.1-beta] — 2026-11-24
+
+### 修正
+- **開機後第一次以後的錄音都沒聲音**（[#2](https://github.com/kiwiiiii-eth/hakios-fajita/issues/2)）：麥克風的 SLIMbus 裝置在兩次錄音之間會保留邏輯位址，驅動卻在等只有新位址才會有的交握，等不到就放棄，連三次後麥克風整個關掉，要重開機才回來。現在保留位址的裝置直接沿用。由 @tre4surehunter9 回報。
+- Wi‑Fi 還在掃描時關機或重開會當機：卸下驅動前先讓基地台相關的呼叫結束，並停掉驅動的計時器。
+- 系統映像保留**中文**（繁體、香港、簡體）：「設定 → 一般 → 語言與地區」現在能把 iOS 切成中文（以前語言檔沒放進去，切了沒反應）。
+
 ## [0.7-beta] — 2026-11-23
 
 ### 新增
