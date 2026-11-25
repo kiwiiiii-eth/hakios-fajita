@@ -1,11 +1,11 @@
 #!/bin/bash
-# HakiOS on the OnePlus 6T, Beta 0.8: make everything a run or an install needs, from this kit, your own IPSW and your own phone.
+# HakiOS on the OnePlus 6T, Beta 0.8.1: make everything a run or an install needs, from this kit, your own IPSW and your own phone.
 #
 #   ./setup.sh ~/Downloads/iPhone10,3,iPhone10,6_16.5_20F66_Restore.ipsw
 #
 # What it does (each step is skipped when its result is already there; run it again after a failure):
 #   1. checks the tools: macOS (Apple silicon or Intel), python3, fastboot, adb, 7zz, zstd, cc, curl, 15 GB free
-#   2. fetches the sources of this release from GitHub (hakios-xnu-kernel at fajita-v0.8-beta, hakios-fajita at v0.8-beta)
+#   2. fetches the sources of this release from GitHub (hakios-xnu-kernel at fajita-v0.8.1-beta, hakios-fajita at v0.8.1-beta)
 #   3. puts the kit's prebuilt kernel and programs in place (nothing is compiled)
 #   4. pulls the phone's firmware over adb (the phone in Android, USB debugging on): hakios-fajita/pull-firmware.sh
 #   5. unpacks your IPSW (sysimage/unpack.sh, about 5 minutes)
@@ -21,8 +21,8 @@ set -e
 KIT=$(cd "$(dirname "$0")" && pwd)
 WORK=${WORK:-$KIT/work}
 IPSW=${1:-${IPSW:-}}
-XNU_TAG=fajita-v0.8-beta
-DEV_TAG=v0.8-beta
+XNU_TAG=fajita-v0.8.1-beta
+DEV_TAG=v0.8.1-beta
 GH=https://github.com/kiwiiiii-eth
 K=$WORK/hakios-xnu-kernel
 D=$WORK/hakios-fajita

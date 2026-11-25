@@ -1,7 +1,7 @@
 #!/bin/bash
 # Make the Beta test kit: what a tester cannot build without Xcode, prebuilt from this tree, and the scripts that make
 # the rest on their own Mac from their own IPSW and phone (beta/setup.sh, beta/run.sh).
-#   scripts/mk-beta-kit.sh [VERSION]   → $ROOT/out/kit/hakios-6t-VERSION.tar.gz (VERSION: v0.8-beta)
+#   scripts/mk-beta-kit.sh [VERSION]   → $ROOT/out/kit/hakios-6t-VERSION.tar.gz (VERSION: v0.8.1-beta)
 #
 # In it, and only these: the kernel (XNU, APSL-2.0, with this port's drivers), a BLANK loader (mkidentity.py --blank:
 # no Apple data; setup.sh fills in the identity from the tester's IPSW), our user-space programs (userland/obj: our
@@ -9,7 +9,7 @@
 # firmware, any key (ssh/), the system or root image. The kit is checked for those before it is packed.
 set -e
 REPO=$(cd -P "$(dirname "$0")/.." && pwd); ROOT=${HAKIOS_ROOT:-$(dirname "$REPO")}; K=$ROOT/hakios-xnu-kernel
-VERSION=${1:-v0.8-beta}
+VERSION=${1:-v0.8.1-beta}
 NAME=hakios-6t-$VERSION
 OUT=$ROOT/out/kit/$NAME
 export PATH="$ROOT/hostbin:$REPO/hostbin:$PATH"

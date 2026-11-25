@@ -1,5 +1,5 @@
 #!/bin/bash
-# HakiOS on the OnePlus 6T, Beta 0.8: one run from the Mac (./install.sh puts HakiOS on the phone instead). The phone on USB, in Android, fastboot or the loader: it is taken to the
+# HakiOS on the OnePlus 6T, Beta 0.8.1: one run from the Mac (./install.sh puts HakiOS on the phone instead). The phone on USB, in Android, fastboot or the loader: it is taken to the
 # loader, the 2.6 GB system image is sent over USB (about a minute), and the kernel runs for SECS seconds (an hour by
 # default); then iOS stops -- the screen keeps its last picture, and touch does nothing -- so the phone is sent back to
 # ABL's fastboot screen at once, where it is plain that the run is over. The log is written to work/out/logs/ as it runs.
@@ -17,7 +17,7 @@ K=$WORK/hakios-xnu-kernel
 export PATH="$WORK/hakios-fajita/hostbin:$PATH"
 # the kernel's version string (hakios_kver) for a tree that is not a git checkout: without a part after the SoC's name the 6T's
 # UFS driver does not know its phone ("-sdm845-", hakios.ufs.c), and every program run through dyld died of SIGBUS (run 108)
-export HAKIOS_VERSION_SUFFIX=${HAKIOS_VERSION_SUFFIX:--v0.8-beta}
+export HAKIOS_VERSION_SUFFIX=${HAKIOS_VERSION_SUFFIX:--v0.8.1-beta}
 NAME=${NAME:-run-$(date +%m%d-%H%M)}
 # a phone in Android: into the boot loader first (with USB debugging on; otherwise hold power + volume down)
 if adb get-state 2>/dev/null | grep -q device; then adb reboot bootloader; sleep 8; fi
