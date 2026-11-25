@@ -29,7 +29,7 @@ make fajita_defconfig && PYTHONSAFEPATH=1 make kernel   # the kernel with the 6T
 xnuloader/mkidentity.sh && xnuloader/build.sh      # the loader
 sysimage/unpack.sh ~/iPhone10,3,iPhone10,6_16.5_20F66_Restore.ipsw   # YOUR IPSW, downloaded from Apple
 tools/mk-mesa.sh && tools/mk-ath11k.sh fetch && tools/mk-ath10k.sh  # Mesa (GPU), Linux's ath10k (Wi-Fi)
-GL=1 REST=1 MODEM=1 SYSTEM=1 userland/build.sh     # root.apfs and system.apfs, with Mesa and the Wi-Fi firmware
+LOCKDOWN=1 ALLOW="locationd lockdown CommCenter" GL=1 REST=1 MODEM=1 SYSTEM=1 userland/build.sh  # root.apfs, system.apfs
 cd ..
 
 hakios-fajita/scripts/mk-usbimg.sh                 # U-Boot + loader, packed for ABL: out/hakios-fajita-usb.img
@@ -70,6 +70,7 @@ reboot reason cleared before the loader, ABL's fastboot if the loader comes back
 ## The test kit's build, from source
 
 The test kit is built from these trees with `scripts/mk-beta-kit.sh`. To build what it carries yourself, follow
-"Building and running" with `BT=1 GL=1 REST=1 MODEM=1 SYSTEM=1 RC=rc.launchd.aks RC_JOBS=rc.jobs.ssh6t userland/build.sh`,
+"Building and running" with `LOCKDOWN=1 ALLOW="locationd lockdown CommCenter" BT=1 GL=1 REST=1 MODEM=1 SYSTEM=1 RC=rc.launchd.aks
+RC_JOBS=rc.jobs.ssh6t userland/build.sh` (CommCenter runs the cellular data since Beta 0.8: without `ALLOW=... CommCenter`, no data),
 your own SSH keys in `hakios-xnu-kernel/ssh/` and `make firmware` (this repository's `pull-firmware.sh`). The loader in the
 kit carries no device identity; `setup.sh` writes the one from your own IPSW into it (`xnuloader/mkidentity.py --fill`).

@@ -72,8 +72,12 @@ journaled.
   If the Mac cannot reach the phone (some routers isolate their clients), put both on an iPhone's hotspot.
 - Sound: Settings → Sounds & Haptics → Ringtone; YouTube in Safari; the volume buttons. (The speaker is limited to −20 dBFS.)
 - The microphone: record in Voice Memos and play it back.
-- With a SIM: LTE data with Wi-Fi off. Bluetooth: scan, pair with a Mac; pair a BLE keyboard (Settings → Bluetooth) and
-  type in Notes. Pair again after every boot.
+- With a SIM: cellular data with Wi-Fi off (Settings → Cellular, iOS's own; new in 0.8). Read the release notes' "Cellular
+  data: before you use it" first: tested with one carrier only, and it uses your plan.
+- Personal Hotspot (new in 0.8.1): Settings → Personal Hotspot → Allow Others to Join, or Control Center; join it from
+  another device. Devices on it use your cellular data.
+- Bluetooth: scan, pair with a Mac, AirPods; pair a BLE keyboard (Settings → Bluetooth) and type in Notes. With `run.sh`,
+  pair again after every boot (an install keeps pairings).
 - The flashlight and brightness from Control Center.
 - Safari: open any site (pages load as of Beta 0.3). Wi-Fi off and on in Settings: the network is joined again by itself.
 - The cameras (new in 0.6): the Camera app, the main camera and the front one, a photograph (JPEG by default; a video
@@ -93,9 +97,10 @@ for about 15 seconds restarts the phone into Android.
 
 Support: issues at https://github.com/kiwiiiii-eth/hakios-fajita/issues; X [@0x718_718](https://x.com/0x718_718); donations (BTC) `bc1p6n329lsup5kpyemsvhqen70h0a4nc2ujyxflza5tfw6a4j8r4afq47gf58`.
 
-Known: the second rear camera is not used; with `run.sh` nothing on the phone survives a reboot (install for that); Bluetooth pairings are lost
-at every boot; scrolling is not yet smooth (55-60 frames a second, about one in ten late); `neofetch` says "iPhone X"
-because the user space believes it is one.
+Known: the second rear camera is not used; with `run.sh` nothing on the phone survives a reboot (install for that);
+scrolling is not yet perfectly smooth (55-60 frames a second, about one in 25 late); the hotspot runs 802.11g/a, up to
+54 Mbps; cellular data is tested only with FarEasTone (Taiwan); `neofetch` says "iPhone X" because the user space
+believes it is one.
 
 ---
 
@@ -136,8 +141,9 @@ Darwin（XNU）核心＋iOS 16.5 使用者空間跑在 OnePlus 6T 上（Beta 0.8
 - **Wi‑Fi 與 SSH**：每次開機都要在「設定 → Wi‑Fi」重新加入網路。接著從 Mac 執行 `ssh -i work/hakios-xnu-kernel/ssh/client_ed25519 root@<手機 IP>`，會看到 neofetch；連不到就讓兩台都連 iPhone 熱點。
 - **聲音**：鈴聲、YouTube、音量鍵。
 - **麥克風**：用語音備忘錄錄音再播放。
-- **行動網路**：插 SIM 卡後關掉 Wi‑Fi，用 LTE 上網。
-- **藍牙**：掃描、和 Mac 配對；在「設定 → 藍牙」配對 BLE 鍵盤，到備忘錄打字（每次開機都要重新配對）。
+- **行動網路**：插 SIM 卡後關掉 Wi‑Fi 上網（「設定 → 行動服務」，iOS 原生；0.8 新增）。使用前請先看版本說明的「行動數據：使用前請先看」：只測過一家電信商，而且會用到你的流量。
+- **個人熱點**（0.8.1 新增）：「設定 → 個人熱點 → 允許其他人加入」或控制中心，再用其他裝置連。連上的裝置會用到你的行動數據。
+- **藍牙**：掃描、和 Mac 配對、AirPods；在「設定 → 藍牙」配對 BLE 鍵盤，到備忘錄打字。用 `run.sh` 時每次開機都要重新配對（安裝版會保留）。
 - **控制中心**：手電筒、亮度。
 - **Safari**：開任何網站（Beta 0.3 起能載入）。在設定把 Wi‑Fi 關掉再打開，會自動連回剛才的網路。
 - **相機**（0.6 新增）：相機 App 的主鏡頭與前鏡頭、拍照（預設存 JPEG；也能錄影）。`setup.sh` 會從你的手機抽相機檔，沒有的話相機 App 是黑的。
@@ -151,4 +157,4 @@ Darwin（XNU）核心＋iOS 16.5 使用者空間跑在 OnePlus 6T 上（Beta 0.8
 
 **其他**：`fastboot oem stop` 可以提早結束一輪；長按電源鍵約 15 秒會重開回 Android。
 
-**已知問題**：第二顆後鏡頭還沒用上；用 `run.sh` 開機時資料不會保留（要保留請安裝）；藍牙配對每次開機都要重來；滑動還不夠順（每秒 55～60 幀，約一成的幀會晚到）；`neofetch` 顯示 iPhone X。
+**已知問題**：第二顆後鏡頭還沒用上；用 `run.sh` 開機時資料不會保留（要保留請安裝）；滑動還不夠完全順（每秒 55～60 幀，約 25 幀有 1 幀晚到）；熱點是 802.11g/a，最快 54 Mbps；行動數據只在遠傳（台灣）實測過；`neofetch` 顯示 iPhone X。

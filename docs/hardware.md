@@ -2,7 +2,7 @@
 
 [← README](../README.md) · [How it boots](how-it-boots.md) · [Hardware support](hardware.md) · [The hard parts](hard-parts.md) · [Building from source](building.md) · [Changelog](../CHANGELOG.md) · [繁體中文](hardware.zh-TW.md)
 
-What was seen on the phone in November 2026 (Beta 0.5), next to upstream HakiOS's reference phone (the POCO X5 Pro,
+What was seen on the phone in November 2026 (Beta 0.8.1), next to upstream HakiOS's reference phone (the POCO X5 Pro,
 "redwood", Snapdragon 778G). The machine-readable list, with the kernel options behind each line, is
 [`device.conf`](../device.conf). ✅ works · partial · ❌ not yet.
 
@@ -17,7 +17,8 @@ What was seen on the phone in November 2026 (Beta 0.5), next to upstream HakiOS'
 | Wi-Fi | ✅ | ✅ | WCN3990 + Linux ath10k; join from Settings, **5 GHz ≈ 95–110 Mbps**; a known network is joined again by itself (auto-join) |
 | Battery level | ✅ | ✅ | PMI8998 fuel gauge in the status bar |
 | **Charging under this kernel** | ✅ | ❌ | 41 % → 64 % in one session, 1 A from USB |
-| **Cellular: LTE registration and data** | ✅ | partial (no registration) | FarEasTone LTE, 4 bars, the carrier's name in the status bar; Safari over LTE, 88 MB down / 56 MB up with zero IPA errors (`ipa8=11`) |
+| **Cellular: LTE registration and data** | ✅ | partial (no registration) | iOS's own CommCenter runs the modem (Beta 0.8): Settings → Cellular, the carrier from its carrier bundle, IPv4 and IPv6 over native `pdp_ip` interfaces; tested on FarEasTone LTE |
+| **Personal Hotspot** | ✅ | — | WCN3990 as a WPA2 access point, DHCP and NAT out of the cellular data (Beta 0.8.1): on from Settings or Control Center, 2.4 or 5 GHz (Maximize Compatibility), the status bar's hotspot icon; 802.11g/a, up to 54 Mbps |
 | **Flashlight** | ✅ | partial | From Control Center's button |
 | **Screen brightness** | ✅ | — | Settings and Control Center slider (DSI command mode) |
 | Temperature guard | ✅ | partial | 21 sensors, GPU and CPU scale down with load |
@@ -26,6 +27,6 @@ What was seen on the phone in November 2026 (Beta 0.5), next to upstream HakiOS'
 | Location | partial | — | The modem's GPS (QMI LOC) to Location Services (`gnss=1`): satellites tracked (23 in view indoors), Location Services turned on by itself, Safari's geolocation gets a position; Apple Maps needs an activated device |
 | **Sound (speaker)** | ✅ | ✅ | iOS sounds, keyboard clicks, YouTube: ADSP → I2S → TFA9894 amplifier (bypass); limited to −20 dBFS for the speaker's safety; on by default |
 | **Microphone** | ✅ | ✅ | Voice Memos records: the bottom microphone (AMIC4) → WCD9340 codec → SLIMbus → ADSP; powered only while something records |
-| Cameras | ❌ | ✅ | Not started |
-| Bluetooth | partial | ❌ | WCN3990 over UART: iOS turns Bluetooth on, scans and pairs with a Mac (`bt=4`); **BLE keyboards pair and type** (BTLEServer, HID over GATT); pairings are not kept across reboots |
+| Cameras | partial | ✅ | Main (autofocus, stabiliser) and front, about 30 fps, photos and videos (Beta 0.6); the second rear camera not yet |
+| Bluetooth | partial | ❌ | WCN3990 over UART: iOS turns Bluetooth on, scans and pairs with a Mac (`bt=4`); **BLE keyboards pair and type** (BTLEServer, HID over GATT); AirPods Pro 2 pair and play, pairings kept across restarts (Beta 0.7) |
 | SSH | ✅ | ✅ | `sshd` with your own key (`RC_JOBS=rc.jobs.ssh6t`); `neofetch` preinstalled and shown at login |

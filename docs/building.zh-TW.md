@@ -18,12 +18,12 @@
 - 這仍是開發者移植。需要**已解鎖 bootloader** 的 6T，以及 Apple Silicon 的 Mac（核心用 Xcode 編譯）。
 - 編核心用 `PYTHONSAFEPATH=1 make kernel`：Homebrew 的 Python 3.15 下，XNU 自帶的 `tools/lldbmacros/core/collections.py` 會蓋掉標準函式庫，第一次編譯會失敗。
 - 韌體不放在 repo 裡，要從自己的手機和 linux-firmware 取得（清單見[英文版的 Firmware](building.md#firmware)）。
-- `scripts/run-darwin-live.sh` 會自動把手機帶回 ABL fastboot、開 loader、用 USB 送 2.4 GB 系統映像（約 1 分鐘），開機並即時存紀錄到 `out/logs/`。
+- `scripts/run-darwin-live.sh` 會自動把手機帶回 ABL fastboot、開 loader、用 USB 送 2.6 GB 系統映像（約 1 分鐘），開機並即時存紀錄到 `out/logs/`。
 - 要安裝到手機：`WORK=$PWD hakios-fajita/beta/install.sh`（**會清除 Android 資料**，見 `beta/README.md`）。
 - `prebuilt/u-boot-install.bin` 是同一份 U-Boot 用 `hakios_fajita_install_defconfig` 編的安裝版（螢幕上不印 U-Boot 文字、loader 前清除重開原因、loader 回來時進 ABL fastboot）。
 
 ## 測試包的內容從原始碼建置
 
 測試包由 `scripts/mk-beta-kit.sh` 從這些原始碼打包。要自己建出同樣的內容，照上面的步驟，改用
-`BT=1 GL=1 REST=1 MODEM=1 SYSTEM=1 RC=rc.launchd.aks RC_JOBS=rc.jobs.ssh6t userland/build.sh`，SSH 金鑰放在 `hakios-xnu-kernel/ssh/`，
+`LOCKDOWN=1 ALLOW="locationd lockdown CommCenter" BT=1 GL=1 REST=1 MODEM=1 SYSTEM=1 RC=rc.launchd.aks RC_JOBS=rc.jobs.ssh6t userland/build.sh`（Beta 0.8 起行動數據由 CommCenter 負責，沒有 `ALLOW=... CommCenter` 就沒有數據），SSH 金鑰放在 `hakios-xnu-kernel/ssh/`，
 再跑 `make firmware`（本 repo 的 `pull-firmware.sh`）。測試包裡的 loader 不含任何裝置身分，`setup.sh` 會從你自己的 IPSW 把身分資料填進去（`xnuloader/mkidentity.py --fill`）。
