@@ -3,6 +3,19 @@
 Every release of HakiOS for the OnePlus 6T. The full notes, with the known issues of each, are in [`releases/`](releases/)
 and on the [releases page](https://github.com/kiwiiiii-eth/hakios-fajita/releases). [繁體中文](CHANGELOG.zh-TW.md)
 
+## [0.8.1-beta] — 2026-11-25
+
+### Fixed
+- **Personal Hotspot**: a device that left could not join again until a restart, and one that came back got no traffic.
+  The Wi‑Fi layer stopped taking a station down at the first step the driver refused, so the firmware's peer was never
+  deleted; every step down is taken now, and the station's key is freed last.
+- The hotspot came up at every start when it had been on: it is off at each start, turned on in Settings or Control Center.
+
+### Added
+- **Maximize Compatibility** in the Personal Hotspot pane: on, 2.4 GHz; off, 5 GHz (channel 149) where allowed.
+- The green Personal Hotspot icon in the Dynamic Island while devices are joined.
+- Control Center's Personal Hotspot button: "Discoverable" or the number of connections; a tap turns it on or off.
+
 ## [0.8-beta] — 2026-11-25
 
 ### Added
