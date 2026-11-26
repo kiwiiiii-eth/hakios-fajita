@@ -1,160 +1,190 @@
-# HakiOS on the OnePlus 6T — Beta 0.8.1 test kit
+# HakiOS on the OnePlus 6T — test kit (Beta 0.8.1)
 
-The Darwin (XNU) kernel and the iOS 16.5 user space on a OnePlus 6T, two ways:
+iOS 16.5 on a OnePlus 6T, two ways: **from the Mac** (`./run.sh`: everything in RAM, nothing flashed) or **installed**
+(`./install.sh`: the phone starts iOS from its power button and keeps your data; Android stays in its other slot).
 
-- **from the Mac** (`./run.sh`, as before): booted over USB, entirely in RAM. Nothing is flashed: the phone keeps
-  Android, and a reboot goes back to it.
-- **installed** (`./install.sh`): the phone starts iOS by itself from its power button, no Mac, no cable. Its data
-  lives on a 20 GB volume of its own on the phone (new in 0.5: Settings shows the space, and a restart takes under a
-  minute). Android stays in its own slot, a command away. **Installing erases Android's data** (see below).
+[繁體中文](#繁體中文) · [Release notes](https://github.com/kiwiiiii-eth/hakios-fajita/blob/main/releases/v0.8.1-beta.md) · [Issues](https://github.com/kiwiiiii-eth/hakios-fajita/issues)
 
-Release notes: https://github.com/kiwiiiii-eth/hakios-fajita/blob/main/releases/v0.8.1-beta.md
+## 1. What you need
 
-## You need
+| | |
+|---|---|
+| Phone | A **OnePlus 6T** (fajita; not the 6, not the T-Mobile 6T) with an **unlocked bootloader**, running OxygenOS |
+| Mac | Apple silicon (tested) or Intel (untried), with [Homebrew](https://brew.sh): `brew install python sevenzip zstd coreutils android-platform-tools` |
+| iOS | Apple's **iOS 16.5 IPSW for iPhone X** (iPhone10,3/10,6, build 20F66, 6.2 GB), downloaded by you, e.g. from https://ipsw.me/iPhone10,3 |
+| Space | About **15 GB** free, and a USB cable |
 
-- A **OnePlus 6T** (fajita, not the 6 or the T-Mobile 6T) with an **unlocked bootloader**, running OxygenOS
-- A **Mac** (Apple silicon, tested; Intel should work, untried) with [Homebrew](https://brew.sh), and:
-  `brew install python sevenzip zstd coreutils android-platform-tools`
-- **Apple's iOS 16.5 IPSW for iPhone X** (iPhone10,3/10,6, build 20F66, `iPhone10,3,iPhone10,6_16.5_20F66_Restore.ipsw`,
-  6.2 GB), downloaded by you, e.g. from https://ipsw.me/iPhone10,3
-- About **15 GB** of free disk and a USB cable
-
-## Two commands
+## 2. Set up (once)
 
 ```sh
-./setup.sh ~/Downloads/iPhone10,3,iPhone10,6_16.5_20F66_Restore.ipsw   # once, 15–25 minutes
-./run.sh                                                               # every boot, an hour each (SECS=… for another length)
+./setup.sh ~/Downloads/iPhone10,3,iPhone10,6_16.5_20F66_Restore.ipsw   # 15–25 minutes
 ```
 
-`setup.sh` asks for the phone once, in Android with USB debugging on, to copy its firmware. `run.sh` takes the phone
-from Android or fastboot, sends the system to it and boots it; the lock screen comes up after about 4 minutes.
+It asks for the phone once, in Android with USB debugging on, to copy its firmware; then it unpacks your IPSW and builds
+the images. With a newer kit, `FW=<the old kit>/work/hakios-xnu-kernel ./setup.sh <IPSW>` takes the firmware from the old
+kit instead of the phone.
 
-## Installing
+## 3. Try it from the Mac
 
 ```sh
-./install.sh          # once, about 10 minutes; again later to update (nothing erased then; from 0.4 too)
-./switch.sh android   # back to Android        ./switch.sh hakios   back to iOS
-./uninstall.sh        # HakiOS off the phone, the phone as it was
+./run.sh                       # an hour (SECS=600 ./run.sh: ten minutes)
+EXTRA="island=1" ./run.sh      # with the Dynamic Island; EXTRA="gnss=1": the modem's GPS (experimental)
 ```
 
-What `install.sh` does, saying each step first:
+The phone can be in Android or fastboot. The lock screen comes up after about 4 minutes; when the time is up iOS stops
+and the phone goes back to the fastboot screen. Nothing on the phone is kept: each run starts fresh.
+`fastboot oem stop` ends a run early.
 
-1. Reads the phone's partition table and the boot, dtbo and vbmeta partitions of both slots (twice, compared) and keeps
-   them in `~/HakiOS-6T-backup/<serial>/`. **Keep that folder**: `uninstall.sh` puts the phone back from it.
-2. Makes a partition `darwin` of the last 32 GiB of userdata (`GIB=…` for 20–64; the data volume gets what is past 12 GiB). **Everything Android keeps is erased**
-   — apps, photos, accounts — and Android starts as new. You type `ERASE` first. The loader writes the new table only
-   if nothing but userdata's end and darwin changes, and reads it back.
-   Then makes the data volume: an empty HFS Plus volume in darwin from 12 GiB on (about 20 GB), once, with macOS's own
-   `newfs_hfs`; the system image and anything before 12 GiB are left as they are, and checked to be.
-3. Writes the iOS system image (2.6 GB) into darwin and reads it back (about 3 minutes).
-4. Puts HakiOS's boot image into the slot Android is not using, and makes that slot active. Android's own slot is not
-   touched.
+## 4. Install it
 
-Then the phone starts iOS: a boot screen (HakiOS, a progress bar as the system image is read, the boot's facts
-below) for about 20 seconds, and the lock screen within a few minutes. `/private/var` is the data volume: what iOS keeps
-is on the phone at once, and shutting down or restarting from iOS works as on an iPhone. The first start after
-installing (or updating from 0.4) moves what 0.4 kept into the volume, once. A forced restart is safe: the volume is
-journaled.
+```sh
+./install.sh              # ISLAND=1 ./install.sh for the Dynamic Island
+```
 
-- **Stuck?** Hold Power + Volume Up until the fastboot screen, then `./switch.sh android` (Android) or `./install.sh`
-  again. Holding Volume Down while the phone starts shows HakiOS's boot menu.
-- `uninstall.sh` puts back HakiOS's slot and the partition table, and makes userdata again (`fastboot -w`: **Android's
-  data is erased again**, and everything in darwin). `KEEP_ANDROID_DATA=1` skips the erase (Android may grow back into
-  the space by itself, not promised); `KEEP_DARWIN=1` leaves the table.
-- Going back to Beta 0.4 (its `install.sh`) shows the data as it was when 0.5 moved it into the volume; what was written
-  under 0.5 is in the volume, which 0.4 does not use.
-- `DEBUG=1 ./install.sh` puts the loader's own log on the boot screen instead of the boot's facts.
+> [!WARNING]
+> **The first install erases Android's data** (apps, photos, accounts): you type `ERASE` first. Android itself stays.
+
+| Step | What `install.sh` does |
+|---|---|
+| 1 | Reads the partition table and both slots' boot, dtbo and vbmeta (twice, compared) and keeps them in `~/HakiOS-6T-backup/<serial>/`. **Keep that folder**: `uninstall.sh` puts the phone back from it |
+| 2 | The first time only: makes a partition `darwin` from the last 32 GiB of userdata (`GIB=20…64`) and an empty data volume in it from 12 GiB on, and erases Android's data. The loader writes the new table only if nothing but userdata's end and darwin changes, and reads it back |
+| 3 | Sends the iOS system image (2.6 GB), writes it into darwin and reads it back (about 3 minutes) |
+| 4 | Puts HakiOS's boot image into the slot Android does not use and makes that slot active. Android's slot is not touched |
+
+Then the phone starts iOS: a boot screen with a progress bar for about 20 seconds, the lock screen within a few minutes.
+What iOS keeps (`/private/var`) is on the phone at once; shut down and restart from iOS work as on an iPhone, and a forced
+restart is safe (the volume is journaled).
+
+Options: `TARGET=a|b` the slot; `EXTRA="gnss=1"` more kernel arguments; `DEBUG=1` the loader's log on the boot screen.
+
+## 5. Update, switch, remove
+
+| Command | |
+|---|---|
+| `./install.sh` again | Updates an install: steps 3 and 4 only, nothing is erased |
+| `./switch.sh android` / `./switch.sh hakios` | Starts Android / HakiOS from then on |
+| `./uninstall.sh` | HakiOS off the phone: its slot and the partition table put back, userdata made again (**Android's data and darwin are erased**; `KEEP_ANDROID_DATA=1` skips that, `KEEP_DARWIN=1` leaves the table) |
 
 ## What to try
 
-- Swipe up; Settings → Wi-Fi to join a network (every boot). Then from the Mac, on the same network:
-  `ssh -i work/hakios-xnu-kernel/ssh/client_ed25519 root@<the phone's address>` — `neofetch` greets you.
-  If the Mac cannot reach the phone (some routers isolate their clients), put both on an iPhone's hotspot.
-- Sound: Settings → Sounds & Haptics → Ringtone; YouTube in Safari; the volume buttons. (The speaker is limited to −20 dBFS.)
-- The microphone: record in Voice Memos and play it back.
-- With a SIM: cellular data with Wi-Fi off (Settings → Cellular, iOS's own; new in 0.8). Read the release notes' "Cellular
-  data: before you use it" first: tested with one carrier only, and it uses your plan.
-- Personal Hotspot (new in 0.8.1): Settings → Personal Hotspot → Allow Others to Join, or Control Center; join it from
-  another device. Devices on it use your cellular data.
-- Bluetooth: scan, pair with a Mac, AirPods; pair a BLE keyboard (Settings → Bluetooth) and type in Notes. With `run.sh`,
-  pair again after every boot (an install keeps pairings).
-- The flashlight and brightness from Control Center.
-- Safari: open any site (pages load as of Beta 0.3). Wi-Fi off and on in Settings: the network is joined again by itself.
-- The cameras (new in 0.6): the Camera app, the main camera and the front one, a photograph (JPEG by default; a video
-  saves too). `setup.sh` takes their files from your phone; without them the Camera
-  app stays black.
-- TrollStore (new in 0.6): on the home screen after the first start; install an IPA from Files or Safari.
-- The Dynamic Island (new in 0.6): `ISLAND=1 ./install.sh`, or `EXTRA="island=1" ./run.sh`.
-- Location (experimental): `EXTRA="gnss=1" ./run.sh` (or an install image built with `EXTRA="gnss=1"`), outdoors with a
-  view of the sky, then Google Maps in Safari (Apple Maps needs an activated device and shows no map). Location
-  Services turn on by themselves; satellites are seen even indoors. Reports welcome: an outdoor GPS fix is not yet confirmed.
+| | |
+|---|---|
+| Wi‑Fi, SSH | Settings → Wi‑Fi, then from the Mac on the same network: `ssh -i work/hakios-xnu-kernel/ssh/client_ed25519 root@<the phone's address>` (`neofetch` greets you) |
+| Cellular data | With a SIM and Wi‑Fi off; Settings → Cellular. Read the release notes' "Cellular data: before you use it": tested with one carrier only, and it uses your plan |
+| Personal Hotspot | Settings → Personal Hotspot → Allow Others to Join, or Control Center. Devices on it use your cellular data |
+| Sound | Ringtones, YouTube in Safari, the volume buttons; Voice Memos records (the speaker is limited to −20 dBFS) |
+| Bluetooth | Pair a Mac, AirPods or a BLE keyboard (Settings → Bluetooth). With `run.sh`, pair again every run |
+| Cameras | The Camera app: the main camera and the front one, photos and videos |
+| TrollStore | On the home screen; install an IPA from Files or Safari |
+| Location | `gnss=1` (experimental): outdoors, Google Maps in Safari (Apple Maps needs an activated device) |
+
+## Known issues
+
+- The second rear camera is not used; scrolling has about one late frame in 25.
+- The hotspot runs 802.11g/a (up to 54 Mbps); cellular data is tested only with FarEasTone (Taiwan), roaming not at all.
+- No calls; SMS are not kept; no App Store or Apple ID. `neofetch` says "iPhone X" (the user space believes it is one).
+- `./run.sh` may stop right at the start now and then (the system image sent over USB arrived damaged): run it again.
 
 ## When something goes wrong
 
-Every run's log is in `work/out/logs/`. Open an issue at https://github.com/kiwiiiii-eth/hakios-fajita/issues with the
-log, what you did and what you saw (a photo of the screen helps). `fastboot oem stop` ends a run early; holding power
-for about 15 seconds restarts the phone into Android.
+- The logs: `work/out/logs/` for runs, `~/HakiOS-6T-backup/<serial>/logs/` for installs. Open an
+  [issue](https://github.com/kiwiiiii-eth/hakios-fajita/issues) with the log, what you did and what you saw (a photo of
+  the screen helps).
+- **Stuck?** Hold Power + Volume Up until the fastboot screen, then `./switch.sh android` or `./install.sh` again.
+  Holding Volume Down while the phone starts shows HakiOS's boot menu.
 
-Support: issues at https://github.com/kiwiiiii-eth/hakios-fajita/issues; X [@0x718_718](https://x.com/0x718_718); donations (BTC) `bc1p6n329lsup5kpyemsvhqen70h0a4nc2ujyxflza5tfw6a4j8r4afq47gf58`.
-
-Known: the second rear camera is not used; with `run.sh` nothing on the phone survives a reboot (install for that);
-scrolling is not yet perfectly smooth (55-60 frames a second, about one in 25 late); the hotspot runs 802.11g/a, up to
-54 Mbps; cellular data is tested only with FarEasTone (Taiwan); `neofetch` says "iPhone X" because the user space
-believes it is one.
+Support: [issues](https://github.com/kiwiiiii-eth/hakios-fajita/issues) · X [@0x718_718](https://x.com/0x718_718) · BTC `bc1p6n329lsup5kpyemsvhqen70h0a4nc2ujyxflza5tfw6a4j8r4afq47gf58`
 
 ---
 
 # 繁體中文
 
-Darwin（XNU）核心＋iOS 16.5 使用者空間跑在 OnePlus 6T 上（Beta 0.8.1），兩種用法：
+讓 OnePlus 6T 跑 iOS 16.5，兩種用法：**從 Mac 開機**（`./run.sh`：全部在記憶體裡，不刷任何分區），或**安裝到手機**
+（`./install.sh`：按電源鍵就進 iOS，資料存在手機上；Android 留在另一個 slot）。
 
-- **從 Mac 開機**（`./run.sh`，同以前）：透過 USB 開機，整套系統在記憶體裡，**不刷任何分區**，重開機就回到 Android。
-- **安裝到手機**（`./install.sh`）：按電源鍵就直接開進 iOS，不用 Mac、不用接線。資料存在手機上一個約 20 GB 的磁碟區（0.5 新增：設定裡看得到完整容量，重開不到 1 分鐘）。
-  Android 留在自己的 slot，一個指令就能切回去。**安裝會清除 Android 的資料**（見下方）。
+[English](#hakios-on-the-oneplus-6t--test-kit-beta-081) · [版本說明](https://github.com/kiwiiiii-eth/hakios-fajita/blob/main/releases/v0.8.1-beta.md#繁體中文) · [問題回報](https://github.com/kiwiiiii-eth/hakios-fajita/issues)
 
-**需要準備**：
-- 已解鎖 bootloader 的 OnePlus 6T（OxygenOS）。
-- Mac（Apple Silicon 已測；Intel 應可用，未實測），裝好 Homebrew 後執行 `brew install python sevenzip zstd coreutils android-platform-tools`。
-- 自己下載的 iPhone X iOS 16.5 IPSW（20F66，6.2 GB）。
-- 約 15 GB 空間。
+## 1. 需要準備
 
-**兩個指令**：
-- `./setup.sh <IPSW 路徑>`：只跑一次，15～25 分鐘。中途會請你把手機開在 Android、開啟 USB 偵錯，用來抽韌體。
-- `./run.sh`：每次開機都跑，一輪 60 分鐘（`SECS=秒數` 可改），約 4 分鐘後出現鎖定畫面；時間到 iOS 會停下，手機自動回到 fastboot 畫面。
+| | |
+|---|---|
+| 手機 | **已解鎖 bootloader 的 OnePlus 6T**（fajita，不是 6，也不是 T-Mobile 版 6T），系統是 OxygenOS |
+| Mac | Apple Silicon（已測）或 Intel（未實測），裝好 [Homebrew](https://brew.sh) 後執行 `brew install python sevenzip zstd coreutils android-platform-tools` |
+| iOS | 自己下載的 **iPhone X iOS 16.5 IPSW**（iPhone10,3/10,6，20F66，6.2 GB），例如 https://ipsw.me/iPhone10,3 |
+| 空間 | 約 **15 GB**，以及一條 USB 線 |
 
-**安裝到手機**：
-- `./install.sh`：第一次約 10 分鐘；之後再跑一次就是更新，不會清任何資料。
-- 它會：①把分區表與兩個 slot 的 boot／dtbo／vbmeta 讀兩次比對後備份到 `~/HakiOS-6T-backup/<序號>/`（**這個資料夾請留著**，
-  解除安裝靠它）②從 userdata 尾端切出 32 GiB 的 `darwin` 分區（`GIB=…` 可改 20～64；資料磁碟區是 12 GiB 之後的部分），**Android 的資料會全部清除**，
-  要先輸入 `ERASE`；loader 只在「只改 userdata 結尾和 darwin」時才寫入，並讀回確認 ③把 iOS 系統映像寫進 darwin 並讀回（約 3 分鐘）
-  之後建立資料磁碟區：darwin 12 GiB 之後約 20 GB 的空白 HFS+（只做一次，用 macOS 內建的 `newfs_hfs`；系統映像與 12 GiB 之前的內容不動，並會檢查確認）
-  ④把 HakiOS 的開機映像刷進 Android 沒在用的 slot，並設為使用中。Android 那個 slot 完全不動。
-- 之後按電源鍵就進 iOS：先是約 20 秒的開機畫面（HakiOS、讀取系統映像的進度條、底下的開機資訊），幾分鐘內出現鎖定畫面。`/private/var` 就是資料磁碟區，寫入直接存在手機上；iOS 裡的關機、重新開機都能用，強制重開也安全（有日誌）。安裝或從 0.4 更新後的第一次開機，會把 0.4 存的資料搬進磁碟區（只搬一次）。
-- `./switch.sh android` 切回 Android，`./switch.sh hakios` 切回 iOS。
-- **卡住了**：按住「電源＋音量上」到 fastboot 畫面，再跑 `./switch.sh android` 或重跑 `./install.sh`；開機時按住音量下會出現 HakiOS 開機選單。
-- `./uninstall.sh`：還原 HakiOS 的 slot 與分區表，並重建 userdata（**Android 資料與 darwin 內容都會清除**）；
-  `KEEP_ANDROID_DATA=1` 不清 Android 資料（空間可能由 Android 自己長回來，不保證）；`KEEP_DARWIN=1` 不動分區表。
-- 退回 0.4（用 0.4 的 `install.sh`）會看到搬進磁碟區當時的資料；在 0.5 寫的資料在磁碟區裡，0.4 不會用到。
-- `DEBUG=1 ./install.sh`：開機畫面底下改顯示 loader 的原始記錄。
+## 2. 設定（只做一次）
 
-**可以測**：
-- **Wi‑Fi 與 SSH**：每次開機都要在「設定 → Wi‑Fi」重新加入網路。接著從 Mac 執行 `ssh -i work/hakios-xnu-kernel/ssh/client_ed25519 root@<手機 IP>`，會看到 neofetch；連不到就讓兩台都連 iPhone 熱點。
-- **聲音**：鈴聲、YouTube、音量鍵。
-- **麥克風**：用語音備忘錄錄音再播放。
-- **行動網路**：插 SIM 卡後關掉 Wi‑Fi 上網（「設定 → 行動服務」，iOS 原生；0.8 新增）。使用前請先看版本說明的「行動數據：使用前請先看」：只測過一家電信商，而且會用到你的流量。
-- **個人熱點**（0.8.1 新增）：「設定 → 個人熱點 → 允許其他人加入」或控制中心，再用其他裝置連。連上的裝置會用到你的行動數據。
-- **藍牙**：掃描、和 Mac 配對、AirPods；在「設定 → 藍牙」配對 BLE 鍵盤，到備忘錄打字。用 `run.sh` 時每次開機都要重新配對（安裝版會保留）。
-- **控制中心**：手電筒、亮度。
-- **Safari**：開任何網站（Beta 0.3 起能載入）。在設定把 Wi‑Fi 關掉再打開，會自動連回剛才的網路。
-- **相機**（0.6 新增）：相機 App 的主鏡頭與前鏡頭、拍照（預設存 JPEG；也能錄影）。`setup.sh` 會從你的手機抽相機檔，沒有的話相機 App 是黑的。
-- **TrollStore**（0.6 新增）：第一次開機後出現在主畫面，可從「檔案」或 Safari 安裝 IPA。
-- **動態島**（0.6 新增）：`ISLAND=1 ./install.sh`，或 `EXTRA="island=1" ./run.sh`。
-- **定位（實驗中）**：`EXTRA="gnss=1" ./run.sh`（或打包安裝映像時帶 `EXTRA="gnss=1"`），到戶外看得到天空的地方，用 Safari 開 Google 地圖（Apple 地圖需要已啟用的裝置，不會顯示圖資）。定位服務會自動打開，室內就能看到衛星。戶外 GPS 定位還沒確認，歡迎回報。
+```sh
+./setup.sh ~/Downloads/iPhone10,3,iPhone10,6_16.5_20F66_Restore.ipsw   # 15～25 分鐘
+```
 
-**回報問題**：到 GitHub issues，附上 `work/out/logs/` 的紀錄、你做了什麼、看到什麼。
+中途會請你把手機開在 Android、打開 USB 偵錯，用來複製手機的韌體；接著解開 IPSW、建好映像。換新版套件時，
+`FW=<舊套件>/work/hakios-xnu-kernel ./setup.sh <IPSW>` 會從舊套件拿韌體，不用再接 Android。
 
-**聯絡與支持**：GitHub issues；X [@0x718_718](https://x.com/0x718_718)；捐款（BTC）`bc1p6n329lsup5kpyemsvhqen70h0a4nc2ujyxflza5tfw6a4j8r4afq47gf58`。
+## 3. 從 Mac 開機試用
 
-**其他**：`fastboot oem stop` 可以提早結束一輪；長按電源鍵約 15 秒會重開回 Android。
+```sh
+./run.sh                       # 一輪 1 小時（SECS=600 ./run.sh：10 分鐘）
+EXTRA="island=1" ./run.sh      # 動態島；EXTRA="gnss=1"：數據機 GPS（實驗中）
+```
 
-**已知問題**：第二顆後鏡頭還沒用上；用 `run.sh` 開機時資料不會保留（要保留請安裝）；滑動還不夠完全順（每秒 55～60 幀，約 25 幀有 1 幀晚到）；熱點是 802.11g/a，最快 54 Mbps；行動數據只在遠傳（台灣）實測過；`neofetch` 顯示 iPhone X。
+手機在 Android 或 fastboot 都可以。約 4 分鐘後出現鎖定畫面；時間到 iOS 會停下，手機回到 fastboot 畫面。手機上什麼都不會保留，
+每一輪都是全新的。`fastboot oem stop` 可以提早結束。
+
+## 4. 安裝到手機
+
+```sh
+./install.sh              # 要動態島：ISLAND=1 ./install.sh
+```
+
+> [!WARNING]
+> **第一次安裝會清除 Android 的資料**（App、照片、帳號），要先輸入 `ERASE`。Android 系統本身會保留。
+
+| 步驟 | `install.sh` 做什麼 |
+|---|---|
+| 1 | 把分區表與兩個 slot 的 boot、dtbo、vbmeta 讀兩次比對後備份到 `~/HakiOS-6T-backup/<序號>/`。**這個資料夾請留著**，解除安裝靠它 |
+| 2 | 只有第一次：從 userdata 尾端切出 32 GiB 的 `darwin` 分區（`GIB=20…64`），在 12 GiB 之後建空白資料磁碟區，並清除 Android 資料。loader 只在「只改 userdata 結尾和 darwin」時才寫入，並讀回確認 |
+| 3 | 送出 iOS 系統映像（2.6 GB），寫進 darwin 並讀回（約 3 分鐘） |
+| 4 | 把 HakiOS 的開機映像刷進 Android 沒在用的 slot，並設為使用中。Android 那個 slot 完全不動 |
+
+之後按電源鍵就進 iOS：約 20 秒有進度條的開機畫面，幾分鐘內出現鎖定畫面。iOS 寫的資料（`/private/var`）直接存在手機上；
+iOS 裡的關機、重新開機都能用，強制重開也安全（磁碟區有日誌）。
+
+其他選項：`TARGET=a|b` 指定 slot；`EXTRA="gnss=1"` 加核心參數；`DEBUG=1` 在開機畫面顯示 loader 記錄。
+
+## 5. 更新、切換、移除
+
+| 指令 | |
+|---|---|
+| 再跑一次 `./install.sh` | 更新已安裝的版本：只做步驟 3、4，不清任何資料 |
+| `./switch.sh android`／`./switch.sh hakios` | 之後開機進 Android／HakiOS |
+| `./uninstall.sh` | 移除 HakiOS：還原它的 slot 與分區表、重建 userdata（**Android 資料與 darwin 都會清除**；`KEEP_ANDROID_DATA=1` 不清，`KEEP_DARWIN=1` 保留分區表） |
+
+## 可以試什麼
+
+| | |
+|---|---|
+| Wi‑Fi、SSH | 「設定 → Wi‑Fi」連上網路，再從同網路的 Mac：`ssh -i work/hakios-xnu-kernel/ssh/client_ed25519 root@<手機 IP>`（會看到 neofetch） |
+| 行動數據 | 插 SIM 卡、關掉 Wi‑Fi；「設定 → 行動服務」。使用前請先看版本說明的「行動數據：使用前請先看」：只測過一家電信商，而且會用到你的流量 |
+| 個人熱點 | 「設定 → 個人熱點 → 允許其他人加入」或控制中心。連上的裝置會用到你的行動數據 |
+| 聲音 | 鈴聲、Safari 裡的 YouTube、音量鍵；語音備忘錄能錄音（喇叭限制在 −20 dBFS） |
+| 藍牙 | 配對 Mac、AirPods 或 BLE 鍵盤（設定 → 藍牙）。用 `run.sh` 時每一輪都要重新配對 |
+| 相機 | 相機 App 的主鏡頭與前鏡頭，能拍照、錄影 |
+| TrollStore | 在主畫面上；可從「檔案」或 Safari 安裝 IPA |
+| 定位 | `gnss=1`（實驗中）：到戶外用 Safari 開 Google 地圖（Apple 地圖需要已啟用的裝置） |
+
+## 已知問題
+
+- 第二顆後鏡頭還沒用上；滑動約 25 幀有 1 幀晚到。
+- 熱點是 802.11g/a（最快 54 Mbps）；行動數據只在遠傳（台灣）實測過，漫遊完全沒測。
+- 不能打電話；簡訊不會保存；不能用 App Store、Apple ID。`neofetch` 顯示 iPhone X（使用者空間以為自己是 iPhone X）。
+- `./run.sh` 偶爾會一開機就停（經 USB 傳過去的系統映像傳壞了）：再跑一次就好。
+
+## 出問題時
+
+- 記錄：從 Mac 開機在 `work/out/logs/`，安裝在 `~/HakiOS-6T-backup/<序號>/logs/`。到 [issues](https://github.com/kiwiiiii-eth/hakios-fajita/issues)
+  回報，附上記錄、你做了什麼、看到什麼（拍下螢幕更好）。
+- **卡住了**：按住「電源＋音量上」到 fastboot 畫面，再跑 `./switch.sh android` 或重跑 `./install.sh`。開機時按住音量下會出現 HakiOS 開機選單。
+
+聯絡與支持：[issues](https://github.com/kiwiiiii-eth/hakios-fajita/issues)・X [@0x718_718](https://x.com/0x718_718)・捐款（BTC）`bc1p6n329lsup5kpyemsvhqen70h0a4nc2ujyxflza5tfw6a4j8r4afq47gf58`
