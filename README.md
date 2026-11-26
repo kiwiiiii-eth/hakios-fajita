@@ -133,19 +133,7 @@ X [@0x718_718](https://x.com/0x718_718) · BTC `bc1p6n329lsup5kpyemsvhqen70h0a4n
   [U-Boot](https://u-boot.org), [bkerler/edl](https://github.com/bkerler/edl); the boot screen is lettered in
   [Inter](https://rsms.me/inter/) and [JetBrains Mono](https://www.jetbrains.com/lp/mono/).
 
-<details>
-<summary><b>License</b></summary>
-
-This repository's own files (configs, scripts, docs, `hostbin/`) are MIT ([LICENSE](LICENSE)). `u-boot/`,
-`prebuilt/u-boot.bin` and `prebuilt/u-boot-install.bin` are GPL-2.0+ (U-Boot), the device tree source GPL-2.0,
-`prebuilt/mkbootimg.py` Apache-2.0 (AOSP). The kernel and drivers live in
-[`hakios-xnu-kernel`](https://github.com/kiwiiiii-eth/hakios-xnu-kernel/tree/fajita) under its terms (XNU-derived code
-APSL 2.0, the rest MIT); the boot screen's lettering is drawn from Inter and JetBrains Mono (SIL Open Font License 1.1).
-
-</details>
-
-<details>
-<summary><b>Star history</b></summary>
+## Star history
 
 <a href="https://star-history.com/#kiwiiiii-eth/hakios-fajita&Date">
   <picture>
@@ -154,5 +142,14 @@ APSL 2.0, the rest MIT); the boot screen's lettering is drawn from Inter and Jet
     <img alt="Star history of kiwiiiii-eth/hakios-fajita" src="https://api.star-history.com/svg?repos=kiwiiiii-eth/hakios-fajita&type=Date" width="600">
   </picture>
 </a>
+
+<details>
+<summary><b>License</b></summary>
+
+This repository's own files (configs, scripts, docs, `hostbin/`) are MIT ([LICENSE](LICENSE)). `u-boot/`,
+`prebuilt/u-boot.bin` and `prebuilt/u-boot-install.bin` are GPL-2.0+ (U-Boot), the device tree source GPL-2.0,
+`prebuilt/mkbootimg.py` Apache-2.0 (AOSP). The kernel and drivers live in
+[`hakios-xnu-kernel`](https://github.com/kiwiiiii-eth/hakios-xnu-kernel/tree/fajita) under its terms (XNU-derived code
+APSL 2.0, the rest MIT); the boot screen's lettering is drawn from Inter and JetBrains Mono (SIL Open Font License 1.1).
 
 </details>

@@ -124,18 +124,7 @@ X [@0x718_718](https://x.com/0x718_718)・捐款（BTC）`bc1p6n329lsup5kpyemsvh
 - **[postmarketOS](https://postmarketos.org) 與主線 Linux** 的 SDM845 支援：每支重寫驅動的參考；ath10k（ISC）原封不動編在 LinuxKPI 上。
 - [LineageOS](https://github.com/LineageOS/android_kernel_oneplus_sdm845)、[Mesa](https://mesa3d.org) freedreno、[U-Boot](https://u-boot.org)、[bkerler/edl](https://github.com/bkerler/edl)；開機畫面字型為 [Inter](https://rsms.me/inter/) 與 [JetBrains Mono](https://www.jetbrains.com/lp/mono/)。
 
-<details>
-<summary><b>授權</b></summary>
-
-本 repo 自己的檔案（設定、腳本、文件、`hostbin/`）採 MIT（[LICENSE](LICENSE)）。`u-boot/`、`prebuilt/u-boot.bin`、`prebuilt/u-boot-install.bin`
-是 GPL-2.0+（U-Boot），裝置樹原始碼 GPL-2.0，`prebuilt/mkbootimg.py` 是 Apache-2.0（AOSP）。核心與驅動在
-[`hakios-xnu-kernel`](https://github.com/kiwiiiii-eth/hakios-xnu-kernel/tree/fajita)，依其授權（XNU 衍生部分 APSL 2.0，其餘 MIT）；
-開機畫面的字由 Inter 與 JetBrains Mono（SIL Open Font License 1.1）繪製。
-
-</details>
-
-<details>
-<summary><b>Star 走勢</b></summary>
+## Star 走勢
 
 <a href="https://star-history.com/#kiwiiiii-eth/hakios-fajita&Date">
   <picture>
@@ -144,5 +133,13 @@ X [@0x718_718](https://x.com/0x718_718)・捐款（BTC）`bc1p6n329lsup5kpyemsvh
     <img alt="kiwiiiii-eth/hakios-fajita 的 Star 走勢圖" src="https://api.star-history.com/svg?repos=kiwiiiii-eth/hakios-fajita&type=Date" width="600">
   </picture>
 </a>
+
+<details>
+<summary><b>授權</b></summary>
+
+本 repo 自己的檔案（設定、腳本、文件、`hostbin/`）採 MIT（[LICENSE](LICENSE)）。`u-boot/`、`prebuilt/u-boot.bin`、`prebuilt/u-boot-install.bin`
+是 GPL-2.0+（U-Boot），裝置樹原始碼 GPL-2.0，`prebuilt/mkbootimg.py` 是 Apache-2.0（AOSP）。核心與驅動在
+[`hakios-xnu-kernel`](https://github.com/kiwiiiii-eth/hakios-xnu-kernel/tree/fajita)，依其授權（XNU 衍生部分 APSL 2.0，其餘 MIT）；
+開機畫面的字由 Inter 與 JetBrains Mono（SIL Open Font License 1.1）繪製。
 
 </details>
