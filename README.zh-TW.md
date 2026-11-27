@@ -13,6 +13,8 @@
 
 [English](README.md) · [安裝說明](beta/README.md#繁體中文) · [版本說明](releases/v0.8.1-beta.md#繁體中文) · [更新紀錄](CHANGELOG.zh-TW.md) · [文件](#文件)
 
+🧪 **iOS 26 除錯版（開發中）**：[現況](docs/ios26.zh-TW.md) · [原始碼（`ios26` 分支）](https://github.com/kiwiiiii-eth/hakios-xnu-kernel/tree/ios26)
+
 <img src="docs/images/bootscreen-phones.png" width="620" alt="OnePlus 6T 上的 HakiOS 開機畫面：HakiOS 字樣、進度條、底部的開機資訊；旁邊是顯示 loader 記錄的除錯版">
 
 </div>

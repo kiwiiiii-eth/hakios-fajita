@@ -13,6 +13,8 @@
 
 [繁體中文](README.zh-TW.md) · [Install guide](beta/README.md) · [Release notes](releases/v0.8.1-beta.md) · [Changelog](CHANGELOG.md) · [Docs](#documentation)
 
+🧪 **iOS 26 debug build (in progress)**: [status](docs/ios26.md) · [sources (`ios26` branch)](https://github.com/kiwiiiii-eth/hakios-xnu-kernel/tree/ios26)
+
 <img src="docs/images/bootscreen-phones.png" width="620" alt="The HakiOS boot screen on a OnePlus 6T: the HakiOS name, a progress bar, and the boot's facts at the bottom; next to it the same screen with the loader's log">
 
 </div>
