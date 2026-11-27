@@ -1,6 +1,6 @@
-# HakiOS on the OnePlus 6T — test kit (Beta 0.8.1)
+# OPiOS 16.5 (HakiOS) – OnePlus 6T: test kit (Beta 0.8.1)
 
-iOS 16.5 on a OnePlus 6T, two ways: **from the Mac** (`./run.sh`: everything in RAM, nothing flashed) or **installed**
+OPiOS (OP for OnePlus): iOS 16.5 on a OnePlus 6T, two ways: **from the Mac** (`./run.sh`: everything in RAM, nothing flashed) or **installed**
 (`./install.sh`: the phone starts iOS from its power button and keeps your data; Android stays in its other slot).
 
 [繁體中文](#繁體中文) · [Release notes](https://github.com/kiwiiiii-eth/hakios-fajita/blob/main/releases/v0.8.1-beta.md) · [Issues](https://github.com/kiwiiiii-eth/hakios-fajita/issues)
@@ -99,10 +99,10 @@ Support: [issues](https://github.com/kiwiiiii-eth/hakios-fajita/issues) · X [@0
 
 # 繁體中文
 
-讓 OnePlus 6T 跑 iOS 16.5，兩種用法：**從 Mac 開機**（`./run.sh`：全部在記憶體裡，不刷任何分區），或**安裝到手機**
+OPiOS（OP 是 OnePlus 的縮寫）讓 OnePlus 6T 跑 iOS 16.5，兩種用法：**從 Mac 開機**（`./run.sh`：全部在記憶體裡，不刷任何分區），或**安裝到手機**
 （`./install.sh`：按電源鍵就進 iOS，資料存在手機上；Android 留在另一個 slot）。
 
-[English](#hakios-on-the-oneplus-6t--test-kit-beta-081) · [版本說明](https://github.com/kiwiiiii-eth/hakios-fajita/blob/main/releases/v0.8.1-beta.md#繁體中文) · [問題回報](https://github.com/kiwiiiii-eth/hakios-fajita/issues)
+[English](README.md) · [版本說明](https://github.com/kiwiiiii-eth/hakios-fajita/blob/main/releases/v0.8.1-beta.md#繁體中文) · [問題回報](https://github.com/kiwiiiii-eth/hakios-fajita/issues)
 
 ## 1. 需要準備
 

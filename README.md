@@ -1,6 +1,6 @@
 <div align="center">
 
-# HakiOS for the OnePlus 6T
+# OPiOS 16.5 (HakiOS) – OnePlus 6T
 
 **iOS 16.5 on a OnePlus 6T**: the open-source Darwin (XNU) kernel and Apple's own user space on a Snapdragon 845.
 
@@ -19,7 +19,7 @@
 
 ## What it is
 
-A port of [HakiOS](https://github.com/oosexgang/hakios-xnu-kernel) (XNU on Qualcomm phones) to the **OnePlus 6T**, with
+**OPiOS** (OP for OnePlus) is a port of [HakiOS](https://github.com/oosexgang/hakios-xnu-kernel) (XNU on Qualcomm phones) to the **OnePlus 6T**, with
 its GPU, modem, Wi‑Fi, touch, battery, audio, camera and Bluetooth drivers written or ported for it. Installed, the phone
 **starts iOS from its power button** and keeps your data; Android stays in its other slot. Or boot it from a Mac without
 flashing anything.

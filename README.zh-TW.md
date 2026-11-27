@@ -1,6 +1,6 @@
 <div align="center">
 
-# HakiOS for OnePlus 6T
+# OPiOS 16.5 (HakiOS) – OnePlus 6T
 
 **讓 OnePlus 6T 跑 iOS 16.5**：開源的 Darwin（XNU）核心，加上 Apple 原本的使用者空間，跑在 Snapdragon 845 上。
 
@@ -19,7 +19,7 @@
 
 ## 這是什麼
 
-[HakiOS](https://github.com/oosexgang/hakios-xnu-kernel)（把 XNU 核心搬到高通手機上）的 **OnePlus 6T** 移植。GPU、數據機、Wi‑Fi、觸控、
+**OPiOS**（OP 是 OnePlus 的縮寫）是 [HakiOS](https://github.com/oosexgang/hakios-xnu-kernel)（把 XNU 核心搬到高通手機上）的 **OnePlus 6T** 移植。GPU、數據機、Wi‑Fi、觸控、
 電池、音訊、相機、藍牙的驅動，都是為 6T 另外寫或移植的。安裝後**按電源鍵就直接開進 iOS**，資料存在手機上；Android 留在另一個
 slot。也可以從 Mac 開機，什麼都不刷。
 
